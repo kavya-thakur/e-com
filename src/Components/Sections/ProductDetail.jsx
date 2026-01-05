@@ -5,7 +5,7 @@ import { Calendar, Disc, Package2, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCart } from "../../Context/CardContext";
 
-const API_URL = "https://695116da70e1605a10893d60.mockapi.io/api/v1/products";
+const API_URL = "https://695bc5731d8041d5eeb8581b.mockapi.io/api/v1/products";
 
 export default function ProductDetail() {
   const { id } = useParams();

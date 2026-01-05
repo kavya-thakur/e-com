@@ -60,19 +60,22 @@ export default function Checkout() {
     }
   }, []);
   const createPaymentOrder = async () => {
-    const res = await fetch("http://localhost:4000/api/createCashfreeOrder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: total,
-        orderId: "store_" + Date.now(),
-        customer: {
-          id: auth.currentUser.uid,
-          email,
-          phone,
-        },
-      }),
-    });
+    const res = await fetch(
+      "https://ecommerce-rx1m.onrender.com/api/createCashfreeOrder",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: total,
+          orderId: "store_" + Date.now(),
+          customer: {
+            id: auth.currentUser.uid,
+            email,
+            phone,
+          },
+        }),
+      }
+    );
 
     return await res.json();
   };
