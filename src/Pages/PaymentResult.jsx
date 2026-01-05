@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { db } from "../firebase";
-import { doc, updateDoc } from "firebase/firestore";
 
 export default function PaymentResult() {
   const [params] = useSearchParams();
@@ -15,16 +13,22 @@ export default function PaymentResult() {
     async function checkPayment() {
       try {
         const res = await fetch(
-          `http://localhost:4000/api/checkPaymentStatus/${orderId}`
+          `https://ecommerce-rx1m.onrender.com/api/checkPaymentStatus/${orderId}`
         );
 
         const data = await res.json();
 
-        if (data.order_status === "PAID") {
+        if (data.status === "paid") {
           setStatus("success");
-        } else {
-          setStatus("failed");
+          return;
         }
+
+        if (data.status === "pending_payment") {
+          setStatus("checking");
+          return;
+        }
+
+        setStatus("failed");
       } catch (err) {
         console.log(err);
         setStatus("failed");
@@ -32,6 +36,10 @@ export default function PaymentResult() {
     }
 
     checkPayment();
+
+    const interval = setInterval(checkPayment, 4000);
+
+    return () => clearInterval(interval);
   }, [orderId]);
 
   if (status === "checking")

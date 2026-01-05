@@ -1,5 +1,5 @@
 import express from "express";
-import fetch from "node-fetch";
+import { db } from "../firebaseAdmin.js";
 
 const router = express.Router();
 
@@ -7,19 +7,22 @@ router.get("/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
 
-    const response = await fetch(
-      `https://sandbox.cashfree.com/pg/orders/${orderId}`,
-      {
-        headers: {
-          "x-client-id": process.env.CASHFREE_CLIENT_ID,
-          "x-client-secret": process.env.CASHFREE_CLIENT_SECRET,
-          "x-api-version": "2022-09-01",
-        },
-      }
-    );
+    const snap = await db
+      .collection("orders")
+      .where("order_id", "==", orderId)
+      .limit(1)
+      .get();
 
-    const data = await response.json();
-    res.json(data);
+    if (snap.empty) {
+      return res.json({ status: "not_found" });
+    }
+
+    const order = snap.docs[0].data();
+
+    res.json({
+      status: order.status,
+      order,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Could not get status" });
