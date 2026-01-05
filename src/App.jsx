@@ -11,6 +11,8 @@ import PrivateRoute from "./Components/AuthPage/PrivateRoute";
 import Login from "./Components/AuthPage/Login";
 import Register from "./Components/AuthPage/Register";
 import PaymentResult from "./Pages/PaymentResult";
+import Account from "./Pages/Account";
+import Orders from "./Components/Sections/Orders";
 
 const App = () => {
   return (
@@ -34,6 +36,8 @@ const App = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/payment-result" element={<PaymentResult />} />
 
+        <Route path="/account" element={<Account />} />
+        <Route path="/orders" element={<Orders />} />
       </Routes>
     </div>
   );

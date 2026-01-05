@@ -6,7 +6,7 @@ const NewArrival = () => {
   useEffect(() => {
     const fetchingProducts = async () => {
       const res = await axios.get(
-        "https://695116da70e1605a10893d60.mockapi.io/api/v1/products"
+        "https://ecommerce-rx1m.onrender.com/api/products"
       );
       console.log(res.data);
       setProduct(res.data.slice(8, 16));

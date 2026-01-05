@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import createCashfreeOrder from "./routes/createCashfreeOrder.js";
 import cashfreeWebhook from "./routes/cashfreeWebhook.js";
 import checkPaymentStatus from "./routes/checkPaymentStatus.js";
+import products from "./routes/products.js";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json({ limit: "1mb", type: "*/*" })); // 👈 important
 app.use("/api/createCashfreeOrder", createCashfreeOrder);
 app.use("/api/cashfreeWebhook", cashfreeWebhook);
 app.use("/api/checkPaymentStatus", checkPaymentStatus);
-
-const PORT = process.env.PORT || 4000;
+app.use("/api/products", products);
+// const PORT = process.env.PORT || 4000;
+const PORT = 4000;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
