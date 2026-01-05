@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --font-heading: "Cormorant Garamond", serif;
+  --font-body: "poppins", serif;
+}
+
+/* Default body font */
+html,
+body {
+  font-family: var(--font-body);
+}
+
+/* Headings = luxury serif */
+h1,
+h3,
+h4,
+h6 {
+  font-family: var(--font-heading) !important;
+}
+h2,
+p {
+  font-family: var(--font-body) !important;
+}
+:root {
+  --lux-bg: #f6f5f1;
+  --lux-surface: #ffffff;
+  --lux-border: #e8e6de;
+  --lux-text: #111111;
+  --lux-muted: #6b7280;
+  --lux-accent: #b6a57d; /* subtle gold-beige */
+  --lux-accent-dark: #9c8a63;
+  --lux-divider: #eceae3;
+  --lux-hover: #f2f0ea;
+}
