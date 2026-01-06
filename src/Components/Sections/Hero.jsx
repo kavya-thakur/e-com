@@ -4,7 +4,7 @@ const Hero = () => {
   return (
     <div className="h-[80vh] mb-2 md:h-[90vh] relative z-20">
       <div className=" flex justify-center m-4 h-full">
-        <div className="relative w-full h-[85vh] overflow-hidden">
+        <div className="relative w-full h-[85vh] md:h-[90vh] overflow-hidden">
           <video
             className="absolute inset-0 w-full h-full object-cover rounded-2xl"
             src="./hero1.mp4"
