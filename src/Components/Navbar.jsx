@@ -61,9 +61,6 @@ export default function Navbar() {
 
           <Link to="/cart" className="relative" aria-label="Cart">
             <ShoppingBag size={20} />
-            <span className="absolute -top-2 -right-2 text-[10px] bg-black text-white px-1.5 rounded-full">
-              2
-            </span>
           </Link>
         </div>
       </div>
