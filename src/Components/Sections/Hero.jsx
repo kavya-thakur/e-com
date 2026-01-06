@@ -2,7 +2,7 @@ import React from "react";
 
 const Hero = () => {
   return (
-    <div className="h-[80vh] mb-10 md:h-[90vh] relative z-20">
+    <div className="h-[80vh] mb-2 md:h-[90vh] relative z-20">
       <div className=" flex justify-center m-4 h-full">
         <div className="relative w-full h-[85vh] overflow-hidden">
           <video
