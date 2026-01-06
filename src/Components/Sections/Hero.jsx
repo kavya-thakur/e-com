@@ -2,16 +2,21 @@ import React from "react";
 
 const Hero = () => {
   return (
-    <div className="h-[85vh] md:h-[90vh] relative">
+    <div className="h-[85vh] md:h-[90vh] relative z-20">
       <div className=" flex justify-center m-4 h-full">
-        <img
-          src="./herosection.png"
-          className=" md:w-[80rem] object-cover rounded-3xl"
-          alt="kay"
-        />
+        <div className="relative w-full h-[88vh] overflow-hidden">
+          <video
+            className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+            src="./hero1.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        </div>
       </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <h1 className="mt-40 md:mt-0 text-4xl font-serif text-neutral-600">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+        <h1 className="mt-[30rem] text-4xl md:text-6xl font-serif text-white">
           Style That Speaks Before You Do
         </h1>
       </div>

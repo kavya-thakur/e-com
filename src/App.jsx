@@ -13,11 +13,13 @@ import Register from "./Components/AuthPage/Register";
 import PaymentResult from "./Pages/PaymentResult";
 import Account from "./Pages/Account";
 import Orders from "./Components/Sections/Orders";
+import ScrollToTop from "./ScrollToTop";
 
 const App = () => {
   return (
     <div className="overflow-hidden">
       <Navbar />
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/women" element={<WomensPage />} />

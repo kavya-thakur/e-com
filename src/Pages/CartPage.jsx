@@ -18,10 +18,16 @@ export default function Cart() {
 
       {/* EMPTY */}
       {cart.length === 0 && (
-        <div className="text-center py-24 border rounded-2xl bg-gray-50">
-          <p className="text-gray-500 text-lg">
-            Your cart is empty — start exploring products.
-          </p>
+        <div className="flex justify-center items-center relative">
+          <img
+            src="./empty.png"
+            className="md:w-[42vw] lg:w-[24vw] h-[30rem] md:h-[40rem] object-cover mt-5 md:mt-20 lg:mt-0"
+            alt="empty cart"
+          />
+          <h3 className="absolute text-2xl text-center md:text-4xl font-semibold capitalize">
+            {" "}
+            Your cart is empty start exploring products.
+          </h3>
         </div>
       )}
 

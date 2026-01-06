@@ -22,14 +22,106 @@ h2,
 p {
   font-family: var(--font-body) !important;
 }
-:root {
-  --lux-bg: #f6f5f1;
-  --lux-surface: #ffffff;
-  --lux-border: #e8e6de;
-  --lux-text: #111111;
-  --lux-muted: #6b7280;
-  --lux-accent: #b6a57d; /* subtle gold-beige */
-  --lux-accent-dark: #9c8a63;
-  --lux-divider: #eceae3;
-  --lux-hover: #f2f0ea;
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+.skeleton {
+  background: linear-gradient(120deg, #e8ecef 30%, #f7f9fb 38%, #e8ecef 45%);
+  background-size: 200% 100%;
+}
+
+.shimmer {
+  animation: shimmerMove 1.6s infinite linear;
+}
+
+@keyframes shimmerMove {
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-card {
+  animation: subtlePulse 1.75s ease-in-out infinite;
+}
+
+@keyframes subtlePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.995);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.skeleton {
+  background: linear-gradient(120deg, #e9edf1 30%, #f8fafc 38%, #e9edf1 45%);
+  background-size: 200% 100%;
+}
+
+.shimmer {
+  animation: shimmerMove 1.6s infinite linear;
+}
+
+@keyframes shimmerMove {
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-card {
+  position: relative;
+  animation: subtlePulse 1.75s ease-in-out infinite;
+}
+
+@keyframes subtlePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.995);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

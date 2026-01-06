@@ -22,13 +22,11 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6">
-      <Link to="/" className="mb-10 text-sm text-gray-500 hover:text-black transition">
-        ← Back to shop
-      </Link>
-
+    <div className="h-[85vh] flex flex-col items-center justify-center px-6">
       <div className="max-w-md w-full bg-gray-50/80 shadow-xl rounded-2xl p-8 space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Create account</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Create account
+        </h1>
         <p className="text-gray-500 text-sm">
           Join us for a faster checkout experience.
         </p>

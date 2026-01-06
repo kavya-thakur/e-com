@@ -3,10 +3,8 @@ import { motion } from "framer-motion";
 export default function Footer() {
   return (
     <footer className="bg-white text-neutral-900 border-t border-neutral-200">
-
       {/* TOP SECTION — GRID */}
       <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
-
         {/* BRAND BLOCK */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -18,8 +16,8 @@ export default function Footer() {
           </h1>
 
           <p className="mt-4 text-sm text-neutral-500 leading-relaxed max-w-xs">
-            A modern luxury label — minimal silhouettes, refined fabrics,
-            and timeless craftsmanship for everyday living.
+            A modern luxury label — minimal silhouettes, refined fabrics, and
+            timeless craftsmanship for everyday living.
           </p>
         </motion.div>
 
@@ -29,12 +27,10 @@ export default function Footer() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <h4 className="text-sm font-medium mb-3 tracking-wide">
-            SHOP
-          </h4>
+          <h4 className="text-sm font-medium mb-3 tracking-wide">SHOP</h4>
 
           <ul className="space-y-2 text-sm">
-            {["New Collection", "Women", "Men", "Jackets", "Jeans"].map((item, i) => (
+            {["Women", "Men"].map((item, i) => (
               <motion.li
                 key={i}
                 whileHover={{ x: 4 }}
@@ -58,7 +54,12 @@ export default function Footer() {
           </h4>
 
           <ul className="space-y-2 text-sm">
-            {["Essentials", "Studio Line", "Limited Drops", "Editorial Picks"].map((item, i) => (
+            {[
+              "Essentials",
+              "Studio Line",
+              "Limited Drops",
+              "Editorial Picks",
+            ].map((item, i) => (
               <motion.li
                 key={i}
                 whileHover={{ x: 4 }}
@@ -77,9 +78,7 @@ export default function Footer() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h4 className="text-sm font-medium mb-3 tracking-wide">
-            SUPPORT
-          </h4>
+          <h4 className="text-sm font-medium mb-3 tracking-wide">SUPPORT</h4>
 
           <ul className="space-y-2 text-sm">
             {["Contact", "Shipping", "Returns", "FAQ"].map((item, i) => (
