@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, easeInOut, motion } from "framer-motion";
 import { useCart } from "../Context/CardContext";
 import { useState } from "react";
 import { db, auth } from "../firebase";
@@ -208,12 +208,14 @@ export default function Checkout() {
         Checkout
       </h1>
 
-      <div className="grid lg:grid-cols-3 gap-10">
+      <div className="grid lg:grid-cols-2 gap-10">
         {/* LEFT — FORM */}
         <motion.form
           onSubmit={handleSubmit}
-          initial={{ opacity: 0, y: 20 }}
+          id="checkout-form"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: easeInOut }}
           className="space-y-8"
         >
           {/* Contact */}
@@ -284,27 +286,64 @@ export default function Checkout() {
               />
             </div>
           </section>
-
-          <section className="bg-gray-50/70 shadow-sm rounded-2xl p-6 md:p-8 space-y-4">
-            <h2 className="text-lg font-medium">Payment</h2>
-            <p className="text-sm text-gray-500">
-              You’ll choose your payment method on the next step.
-            </p>
-          </section>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-black text-white py-3 rounded-xl text-sm font-medium hover:opacity-90"
-          >
-            {loading ? "Saving..." : "Save & Continue to Payment"}
-          </button>
-
-          {msg && <p className="text-sm text-green-600">{msg}</p>}
         </motion.form>
 
         {/* RIGHT — SUMMARY (unchanged) */}
-        <Ordersummary />
+        <motion.div
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.4, ease: easeInOut }}
+          className=" space-y-6"
+        >
+          <Ordersummary />
+          <button
+            type="submit"
+            form="checkout-form"
+            disabled={loading}
+            className={`w-full rounded-xl py-3 text-sm font-medium transition${
+              loading
+                ? " bg-gray-800 cursor-not-allowed"
+                : " bg-gray-900 hover:opacity-90"
+            } text-white flex items-center justify-center gap-3`}
+          >
+            <AnimatePresence mode="wait">
+              {loading ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-3"
+                >
+                  {/* Spinner */}
+                  <motion.span
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 0.9,
+                      ease: "linear",
+                    }}
+                  />
+
+                  {/* Text */}
+                  <span className="tracking-wide">Securing payment…</span>
+                </motion.div>
+              ) : (
+                <motion.span
+                  key="idle"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  Save & Continue to Payment
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+
+          {msg && <p className="text-sm text-green-600">{msg}</p>}
+        </motion.div>
       </div>
     </div>
   );

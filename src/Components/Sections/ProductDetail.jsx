@@ -4,9 +4,6 @@ import axios from "axios";
 import {
   ArrowLeft,
   Box,
-  Calendar,
-  Disc,
-  Package2,
   RotateCcw,
   ShieldCheck,
   ShoppingCart,
@@ -16,6 +13,7 @@ import { motion } from "framer-motion";
 import { useCart } from "../../Context/CardContext";
 import { wait } from "../utils/wait";
 import Footer from "./Footer";
+import toast from "react-hot-toast";
 
 const API_URL = "https://695bc5731d8041d5eeb8581b.mockapi.io/api/v1/products";
 const CACHE_KEY = "product_cache";
@@ -28,13 +26,6 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { dispatch } = useCart();
-  const sizes = ["S", "M", "L", "XL"];
-
-  const shippingDets = [
-    { icon: <Disc />, label: "Discount", des: "Disc 50%" },
-    { icon: <Package2 />, label: "Package", des: "Regular package" },
-    { icon: <Calendar />, label: "Delivery time", des: "3–4 working days" },
-  ];
 
   useEffect(() => {
     let canceled = false;
@@ -85,6 +76,7 @@ export default function ProductDetail() {
     });
 
     setAdding(true);
+    toast.success("Added Successfully");
     setTimeout(() => setAdding(false), 1200);
   };
 
@@ -141,7 +133,7 @@ export default function ProductDetail() {
           <motion.img
             src={product.image}
             alt={product.title}
-            className="h-[24rem] md:h-[80vh] rounded-xl object-cover shadow-xl"
+            className="h-[21rem] md:h-[80vh] rounded-xl object-cover shadow-xl"
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
@@ -155,7 +147,7 @@ export default function ProductDetail() {
           transition={{ delay: 0.05, duration: 0.45 }}
           className="space-y-3"
         >
-          <h2 className=" text-xl md:text-3xl font-serif capitalize tracking-tight leading-none font-semibold">
+          <h2 className=" text-lg md:text-3xl font-serif capitalize tracking-tight leading-none font-semibold">
             {product.title}
           </h2>
 
@@ -171,19 +163,21 @@ export default function ProductDetail() {
             Rs. {product.price}
           </motion.h2>
 
-          <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-10">
+          <p className="text-gray-600 text-sm md:text-base leading-relaxed ">
             {product.description}
           </p>
 
           {/* SIZES */}
           <div>
-            <p className="text-neutral-700 text-sm mb-3">Select Size</p>
+            <p className="text-neutral-500 text-xs md:text-sm my-2 md:mb-3">
+              Select Size
+            </p>
             <div className="flex gap-2">
               {["S", "M", "L", "XL"].map((s) => (
                 <motion.button
                   key={s}
                   onClick={() => setSelectedSize(s)}
-                  className={`py-3 px-8 rounded-full text-sm transition
+                  className={`py-2 px-4 w-full md:py-4 md:px-6 rounded-full text-sm transition
                 ${
                   selectedSize === s
                     ? "bg-black text-white"
@@ -200,7 +194,7 @@ export default function ProductDetail() {
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={handleAdd}
-            className="capitalize rounded-lg my-5 py-3 flex items-center justify-center gap-3 text-sm px-4 bg-black w-full text-white"
+            className="capitalize rounded-lg my-5 py-2 md:py-3 flex items-center justify-center gap-3 text-sm px-4 bg-black w-full text-white"
           >
             <ShoppingCart className="w-4" />{" "}
             {adding ? "Added ✔" : "Add to cart"}
@@ -209,13 +203,11 @@ export default function ProductDetail() {
           {/* DESCRIPTION */}
           <div>
             <h2 className="font-medium mb-2">Description & Fit</h2>
-            <p className="text-gray-500 text-sm">
-              Loose-fit, soft brushed interior, ribbed cuffs and hem.
-            </p>
+            <p className="text-gray-500 text-sm">{product.description}</p>
           </div>
 
           {/* SHIPPING */}
-          <div className="">
+          <div className=" mt-10  border-neutral-300">
             <h2 className="font-medium mb-6 tracking-tight text-lg">
               Shipping & service
             </h2>

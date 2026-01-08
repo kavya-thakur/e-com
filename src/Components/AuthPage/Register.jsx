@@ -1,11 +1,13 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { auth } from "../../firebase";
+import { auth, db } from "../../firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function Register() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [name, setname] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -14,9 +16,19 @@ export default function Register() {
     setError("");
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/"); // redirect after signup
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+
+      await updateProfile(res.user, { displayName: name });
+      await setDoc(doc(db, "users", res.user.uid), {
+        name,
+        email,
+        role: "customer",
+        createdAt: new Date(),
+      });
+
+      navigate("/");
     } catch (err) {
+      console.log(err);
       setError("Account could not be created. Try another email.");
     }
   };
@@ -32,6 +44,14 @@ export default function Register() {
         </p>
 
         <form className="space-y-4" onSubmit={handleRegister}>
+          <input
+            type="text"
+            placeholder="Name"
+            required
+            className="w-full bg-white rounded-xl px-4 py-3 text-sm outline-none shadow-inner"
+            value={name}
+            onChange={(e) => setname(e.target.value)}
+          />
           <input
             type="email"
             placeholder="Email"

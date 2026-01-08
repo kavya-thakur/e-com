@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useEffect, useState, useMemo } from "react";
-import ProductCard from "../Components/ProductCard";
-import { wait } from "./utils/wait";
+import { wait } from "../Components/utils/wait";
 import { motion } from "framer-motion";
+import ProductCard from "../Components/smallComponents/ProductCard";
 
 const API_URL = "https://695bc5731d8041d5eeb8581b.mockapi.io/api/v1/products";
 

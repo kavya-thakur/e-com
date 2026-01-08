@@ -1,5 +1,4 @@
 import React from "react";
-import Navbar from "./Components/Navbar";
 import HomePage from "./Pages/HomePage";
 import { Route, Routes } from "react-router-dom";
 import WomensPage from "./Pages/WomensPage";
@@ -14,10 +13,24 @@ import PaymentResult from "./Pages/PaymentResult";
 import Account from "./Pages/Account";
 import Orders from "./Components/Sections/Orders";
 import ScrollToTop from "./ScrollToTop";
-
+import Navbar from "./Components/smallComponents/Navbar";
+import AdminOnly from "./Components/Dashboard/Adminonly";
+import Dashboard from "./Components/Dashboard/Dashboard";
+import { Toaster } from "react-hot-toast";
 const App = () => {
   return (
     <div className="overflow-hidden">
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            borderRadius: "14px",
+            background: "#111",
+            color: "#fff",
+          },
+        }}
+      />
       <Navbar />
       <ScrollToTop />
       <Routes>
@@ -39,7 +52,24 @@ const App = () => {
         <Route path="/payment-result" element={<PaymentResult />} />
 
         <Route path="/account" element={<Account />} />
-        <Route path="/orders" element={<Orders />} />
+        <Route
+          path="/orders"
+          element={
+            <PrivateRoute>
+              <Orders />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/orders"
+          element={
+            <PrivateRoute>
+              <AdminOnly>
+                <Dashboard />
+              </AdminOnly>
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </div>
   );

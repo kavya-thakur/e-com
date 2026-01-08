@@ -1,4 +1,4 @@
-import ProductListing from "../Components/Productlisting";
+import ProductListing from "./Productlisting";
 
 export default function MensPage() {
   return (

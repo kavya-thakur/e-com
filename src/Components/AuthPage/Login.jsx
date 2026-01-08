@@ -3,6 +3,9 @@ import { auth } from "../../firebase";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { easeIn, motion } from "framer-motion";
+import toast from "react-hot-toast";
+
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -18,6 +21,7 @@ export default function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast.success("Login Successfully");
       navigate(redirectPath);
     } catch (err) {
       setError("Incorrect email or password.");
@@ -25,7 +29,12 @@ export default function Login() {
   };
 
   return (
-    <div className="h-[85vh] flex flex-col items-center justify-center px-6">
+    <motion.div
+      initial={{ y: 24 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.25, ease: easeIn }}
+      className="h-[85vh] flex flex-col items-center justify-center px-6"
+    >
       <div className="max-w-md w-full bg-gray-50/80 shadow-xl rounded-2xl p-8 space-y-6">
         <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
         <p className="text-gray-500 text-sm">
@@ -63,6 +72,6 @@ export default function Login() {
           </Link>
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

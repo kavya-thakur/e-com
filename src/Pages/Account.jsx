@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { User, LogOut, Package } from "lucide-react";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import toast from "react-hot-toast";
 
 export default function Account() {
   const [user, setUser] = useState(null);
@@ -59,7 +60,10 @@ export default function Account() {
             <motion.button
               whileTap={{ scale: 0.96 }}
               className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition"
-              onClick={() => signOut(auth)}
+              onClick={() => {
+                signOut(auth);
+                toast.success("Logout Successfully");
+              }}
             >
               <LogOut className="w-4 h-4" />
               Logout

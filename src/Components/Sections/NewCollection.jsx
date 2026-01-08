@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import ProductCard from "../ProductCard";
 import { wait } from "../utils/wait";
+import ProductCard from "../smallComponents/ProductCard";
 
 const CACHE_KEY = "new_collection_cache";
 
@@ -55,7 +55,7 @@ const NewCollection = () => {
   return (
     <div className="min-h-screen max-w-7xl mx-auto pt-10 md:pt-20 relative">
       {/* HERO */}
-      <div className="flex flex-col-reverse md:flex-row gap-4 relative p-4 md:px-0">
+      <div className="flex flex-col-reverse lg:flex-row gap-4 relative p-4 ">
         <img
           className="h-[70vh] w-full object-cover rounded-xl md:h-[85vh] md:w-fit"
           src="./newcollection.png"
@@ -69,16 +69,16 @@ const NewCollection = () => {
         </div>
 
         <div className="text-5xl tracking-tighter font-serif leading-none md:text-6xl relative w-full">
-          <h2>NEW</h2>
-          <h2>COLLECTION</h2>
+          <h3>NEW</h3>
+          <h3>COLLECTION</h3>
 
           <img
-            className="h-[45vh] hidden rounded-xl md:block md:w-fit absolute bottom-0"
+            className="h-[45vh] hidden rounded-xl lg:block md:w-fit absolute bottom-0"
             src="./newcollection2.png"
             alt=""
           />
 
-          <div className="hidden md:block font-light md:text-base tracking-normal absolute right-0 w-88 pt-22">
+          <div className="hidden lg:block font-light md:text-base tracking-normal absolute right-0 w-88 pt-22">
             <p>
               Our newest collection is an invitation to slow down and rediscover
               the beauty of well-crafted clothing…
@@ -88,7 +88,7 @@ const NewCollection = () => {
       </div>
 
       {/* PRODUCTS */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 ">
         {loading
           ? [...Array(8)].map((_, i) => (
               <div

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, User, ShoppingBag } from "lucide-react";
+import { Search, CircleUser, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import SearchOverlay from "./SearchOverlay";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-white ">
@@ -50,17 +52,22 @@ export default function Navbar() {
         </Link>
 
         {/* RIGHT ICONS */}
-        <div className="flex gap-4 items-center">
-          {/* <button aria-label="Search">
+        <div className="flex gap-4 items-center ">
+          <button
+            className="cursor-pointer"
+            onClick={() => setSearchOpen(true)}
+          >
             <Search size={20} />
-          </button> */}
+          </button>
+          {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
 
           <Link to="/account" aria-label="Account">
-            <User size={20} />
+            <CircleUser size={20} />
           </Link>
 
           <Link to="/cart" className="relative" aria-label="Cart">
-            <ShoppingBag size={20} />
+            {/* <ShoppingBag size={20} /> */}
+            <ShoppingCart size={20} />
           </Link>
         </div>
       </div>

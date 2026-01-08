@@ -25,7 +25,9 @@ const ProductCard = ({ id, title, image, price, rating, category }) => {
           <p className="text-xs text-neutral-500 capitalize mt-1">{category}</p>
 
           <div className="flex items-center justify-between mt-3">
-            <h2 className=" text-neutral-900 text-sm font-medium">Rs. {price}</h2>
+            <h2 className=" text-neutral-900 text-sm font-medium">
+              Rs. {price}
+            </h2>
 
             {rating && (
               <span className="text-xs bg-black text-white px-2 py-1 rounded-full">
