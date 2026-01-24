@@ -13,7 +13,7 @@ export default function PaymentResult() {
     async function checkPayment() {
       try {
         const res = await fetch(
-          `https://ecommerce-rx1m.onrender.com/api/checkPaymentStatus/${orderId}`
+          `https://ecommerce-rx1m.onrender.com/api/checkPaymentStatus/${orderId}`,
         );
 
         const data = await res.json();

@@ -91,10 +91,10 @@ export default function Dashboard() {
         <div className="flex gap-2 mt-2 overflow-x-auto">
           {[
             { v: "all", label: "All" },
-            { v: "pending", label: "Pending" },
+            { v: "pending_payment", label: "Pending" },
             { v: "processing", label: "Processing" },
-            { v: "shipped", label: "Shipped" },
-            { v: "delivered", label: "Delivered" },
+            { v: "paid", label: "Paid" },
+            // { v: "delivered", label: "Delivered" },
             { v: "cancelled", label: "Cancelled" },
           ].map((s) => (
             <button
