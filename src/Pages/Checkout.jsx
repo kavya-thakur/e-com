@@ -74,7 +74,7 @@ export default function Checkout() {
             phone,
           },
         }),
-      }
+      },
     );
 
     return await res.json();
