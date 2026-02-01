@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import React from "react";
-import { useCart } from "../../Context/CardContext";
+import { useCart } from "../../Context/CartContext";
 
 const Ordersummary = () => {
   const { cart } = useCart();

@@ -17,7 +17,7 @@ function reducer(state, action) {
       const exists = state.find((item) => item.id === action.payload.id);
       if (exists) {
         return state.map((item) =>
-          item.id === action.payload.id ? { ...item, qty: item.qty + 1 } : item,
+          item.id === action.payload.id ? { ...item, qty: item.qty + 1 } : item
         );
       }
       return [...state, { ...action.payload, qty: 1 }];
@@ -28,7 +28,7 @@ function reducer(state, action) {
     case "DECREASE":
       return state
         .map((item) =>
-          item.id === action.id ? { ...item, qty: item.qty - 1 } : item,
+          item.id === action.id ? { ...item, qty: item.qty - 1 } : item
         )
         .filter((item) => item.qty > 0);
 

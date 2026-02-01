@@ -160,7 +160,7 @@ export default function ProductListing({ gender, title, categories }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 md:px-0 grid md:grid-cols-[245px_1fr] gap-4">
+    <div className="max-w-7xl mx-auto px-4 py-10 md:px-4 lg:px-4 grid md:grid-cols-[245px_1fr] gap-4">
       {/* Sidebar */}
       <aside className="hidden md:block border p-4 rounded-2xl">
         <h2 className="mb-3 font-medium">{title}</h2>

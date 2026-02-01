@@ -1,5 +1,5 @@
 import { AnimatePresence, easeInOut, motion } from "framer-motion";
-import { useCart } from "../Context/CardContext";
+import { useCart } from "../Context/CartContext";
 import { useState } from "react";
 import { db, auth } from "../firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";

@@ -10,7 +10,7 @@ import {
   Truck,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useCart } from "../../Context/CardContext";
+import { useCart } from "../../Context/CartContext";
 import { wait } from "../utils/wait";
 import Footer from "./Footer";
 import toast from "react-hot-toast";

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Trash2 } from "lucide-react";
-import { useCart } from "../Context/CardContext";
+import { useCart } from "../Context/CartContext";
 import { Link } from "react-router-dom";
 
 export default function Cart() {
