@@ -5,7 +5,7 @@ import ProductCard from "../smallComponents/ProductCard";
 import TextReveal from "../smallComponents/Textsplit";
 
 const CACHE_KEY = "new_arrivals_cache";
-let memoryCache = null; // ✅ in-memory cache
+let memoryCache = null;
 
 const containerVariants = {
   hidden: {},
@@ -40,7 +40,7 @@ const NewArrival = () => {
   useEffect(() => {
     mountedRef.current = true;
 
-    if (products.length > 0) return; // ✅ already have data, don’t refetch
+    if (products.length > 0) return; 
 
     const fetchProducts = async () => {
       try {
@@ -52,7 +52,7 @@ const NewArrival = () => {
 
         const sliced = res.data.slice(8, 16);
 
-        memoryCache = sliced; // ✅ save in memory
+        memoryCache = sliced; 
         localStorage.setItem(CACHE_KEY, JSON.stringify(sliced));
 
         setProducts(sliced);

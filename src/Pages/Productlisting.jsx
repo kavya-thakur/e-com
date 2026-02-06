@@ -101,7 +101,6 @@ function ProductListing({ gender, title, categories }) {
     );
   }, []);
 
-  /* 🔽 EVERYTHING BELOW IS YOUR ORIGINAL UI (UNCHANGED) 🔽 */
 
   if (loading)
     return (

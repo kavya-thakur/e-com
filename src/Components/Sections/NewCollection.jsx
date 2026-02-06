@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, memo } from "react";
 import ProductCard from "../smallComponents/ProductCard";
 
 const CACHE_KEY = "new_collection_cache";
-let memoryCache = null; // ✅ in-memory cache
+let memoryCache = null; 
 
 const NewCollection = () => {
   const [products, setProducts] = useState(() => {
@@ -19,7 +19,7 @@ const NewCollection = () => {
   useEffect(() => {
     mountedRef.current = true;
 
-    if (products.length > 0) return; // ✅ don’t refetch if already have data
+    if (products.length > 0) return; 
 
     const fetchProducts = async () => {
       try {

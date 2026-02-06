@@ -7,7 +7,7 @@ const Hero = () => {
   const text = "Style That Speaks Before You Do....";
   const words = text.split(" ");
 
-  /* ----------- YOUR HEADLINE ANIMATION (UNCHANGED) ----------- */
+  /* -----------  HEADLINE ANIMATION ----------- */
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -37,7 +37,7 @@ const Hero = () => {
     },
   };
 
-  /* ----------- SUPPORTING TIMELINE ANIMATIONS ----------- */
+  /* -----------TIMELINE ANIMATIONS ----------- */
 
   const fadeUpSoft = {
     hidden: { opacity: 0, y: 18 },
@@ -79,7 +79,6 @@ const Hero = () => {
 
       {/* CONTENT */}
       <div className="relative z-10 flex flex-col items-center h-full px-6 text-center gap-6">
-        {/* BRAND SIGNAL — TIMELINE ENTRY */}
         <motion.span
           variants={fadeUpSoft}
           initial="hidden"
@@ -90,7 +89,7 @@ const Hero = () => {
           New Season · Limited Drop
         </motion.span>
 
-        {/* HEADLINE — UNCHANGED */}
+        {/* HEADLINE  */}
         <motion.h1
           variants={containerVariants}
           initial="hidden"
@@ -104,7 +103,6 @@ const Hero = () => {
           ))}
         </motion.h1>
 
-        {/* SUPPORTING LINE — MASKED REVEAL */}
         <motion.div
           initial="hidden"
           animate="visible"
@@ -120,7 +118,7 @@ const Hero = () => {
           </motion.h6>
         </motion.div>
 
-        {/* CTA — CALM ENTRY + UNIQUE ICON HOVER */}
+        {/* CTA */}
         <motion.div
           variants={fadeUpSoft}
           initial="hidden"
@@ -129,22 +127,10 @@ const Hero = () => {
           className="absolute top-105 md:top-90 right-15 md:right-55"
         >
           <Link to={"/men"}>
-            <button className="group px-6 py-3 backdrop-blur-sm bg-white/10 text-white text-xs md:text-sm md:tracking-wide rounded-full flex gap-2 items-center">
+            <button className="group px-6 py-3 backdrop-blur-sm bg-white/10 text-white text-xs md:text-sm md:tracking-wide rounded-full flex gap-2 items-center hover:text-white/80">
               <span>Explore Collection</span>
 
-              {/* ICON MICRO-INTERACTION */}
-              <motion.span
-                initial={{ x: 0 }}
-                whileHover={{
-                  x: 8,
-                  rotate: -6,
-                  transition: {
-                    duration: 0.45,
-                    ease: [0.22, 1, 0.36, 1],
-                  },
-                }}
-                className="inline-flex"
-              >
+              <motion.span className="inline-flex">
                 <MoveRight size={20} />
               </motion.span>
             </button>

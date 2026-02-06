@@ -55,13 +55,11 @@ function reducer(state, action) {
 export function CartProvider({ children }) {
   const [cart, dispatch] = useReducer(reducer, [], initCart);
 
-  // persist cart
   useEffect(() => {
     const key = getCartKey(auth.currentUser);
     localStorage.setItem(key, JSON.stringify(cart));
   }, [cart]);
 
-  // reload cart on auth change
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       const key = getCartKey(user);
@@ -72,7 +70,6 @@ export function CartProvider({ children }) {
     return () => unsub();
   }, []);
 
-  // ✅ memoize context value
   const value = useMemo(() => {
     return { cart, dispatch };
   }, [cart]);
