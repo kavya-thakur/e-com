@@ -1,15 +1,24 @@
-import { createContext, useContext, useReducer, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useMemo,
+} from "react";
 import { auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 const CartContext = createContext();
 
-function getCartKey() {
-  const user = auth.currentUser;
+function getCartKey(user) {
   return user ? `cart_${user.uid}` : "cart_guest";
 }
 
-const initialState = JSON.parse(localStorage.getItem(getCartKey())) || [];
+function initCart() {
+  const user = auth.currentUser;
+  const key = getCartKey(user);
+  return JSON.parse(localStorage.getItem(key)) || [];
+}
 
 function reducer(state, action) {
   switch (action.type) {
@@ -44,28 +53,31 @@ function reducer(state, action) {
 }
 
 export function CartProvider({ children }) {
-  const [cart, dispatch] = useReducer(reducer, initialState);
+  const [cart, dispatch] = useReducer(reducer, [], initCart);
 
-  // persist per-user cart
+  // persist cart
   useEffect(() => {
-    localStorage.setItem(getCartKey(), JSON.stringify(cart));
+    const key = getCartKey(auth.currentUser);
+    localStorage.setItem(key, JSON.stringify(cart));
   }, [cart]);
 
-  // reload correct cart when user changes
+  // reload cart on auth change
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, () => {
-      const saved = JSON.parse(localStorage.getItem(getCartKey())) || [];
+    const unsub = onAuthStateChanged(auth, (user) => {
+      const key = getCartKey(user);
+      const saved = JSON.parse(localStorage.getItem(key)) || [];
       dispatch({ type: "RESET_TO", payload: saved });
     });
 
     return () => unsub();
   }, []);
 
-  return (
-    <CartContext.Provider value={{ cart, dispatch }}>
-      {children}
-    </CartContext.Provider>
-  );
+  // ✅ memoize context value
+  const value = useMemo(() => {
+    return { cart, dispatch };
+  }, [cart]);
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

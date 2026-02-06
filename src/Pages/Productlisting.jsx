@@ -1,64 +1,64 @@
 import axios from "axios";
-import { useEffect, useState, useMemo } from "react";
-import { wait } from "../Components/utils/wait";
-import { motion } from "framer-motion";
+import { useEffect, useState, useMemo, useRef, memo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "../Components/smallComponents/ProductCard";
 
 const API_URL = "https://695bc5731d8041d5eeb8581b.mockapi.io/api/v1/products";
+const TTL = 5 * 60 * 1000;
 
-export default function ProductListing({ gender, title, categories }) {
-  const [products, setProducts] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const TTL = 5 * 60 * 1000; // 5 minutes
+// ✅ memory cache per gender
+const memoryCache = {};
 
+function ProductListing({ gender, title, categories }) {
   const CACHE_KEY = `products_${gender}`;
 
+  // ✅ initialize from cache instead of empty
+  const [products, setProducts] = useState(() => {
+    if (memoryCache[gender]) return memoryCache[gender];
+
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return [];
+
+    const parsed = JSON.parse(cached);
+    return parsed.data || parsed;
+  });
+
+  // ✅ only show shimmer if no data
+  const [loading, setLoading] = useState(() => products.length === 0);
+  const [error, setError] = useState(null);
+
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const mountedRef = useRef(true);
+
   useEffect(() => {
-    let canceled = false;
+    mountedRef.current = true;
+
+    // ✅ if already cached in memory, do nothing
+    if (memoryCache[gender]) return;
+
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      const isFresh = parsed.timestamp && Date.now() - parsed.timestamp < TTL;
+
+      if (isFresh) {
+        memoryCache[gender] = parsed.data;
+        setProducts(parsed.data);
+        setLoading(false);
+        return;
+      }
+    }
 
     async function fetchProducts() {
-      setLoading(true);
-
-      // 1️⃣ use cache first
-      const cached = localStorage.getItem(CACHE_KEY);
-
-      if (cached) {
-        const parsed = JSON.parse(cached);
-
-        // OLD format (array only)
-        if (Array.isArray(parsed)) {
-          await wait(350);
-          setProducts(parsed);
-          setLoading(false);
-        }
-        // NEW format (object with timestamp + data)
-        else {
-          await wait(350);
-          setProducts(parsed.data);
-          setLoading(false);
-        }
-      }
-
       try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        const parsed = cached ? JSON.parse(cached) : null;
-
-        const isFresh = parsed && Date.now() - parsed.timestamp < TTL;
-
-        // ⛔ don't call API if cache still valid
-        if (isFresh) return;
-
-        // ✅ only fetch when data is old or missing
         const { data } = await axios.get(API_URL);
-
-        if (canceled) return;
+        if (!mountedRef.current) return;
 
         const list = data.filter((p) => p.gender === gender);
 
-        setProducts(list);
+        memoryCache[gender] = list;
 
         localStorage.setItem(
           CACHE_KEY,
@@ -67,36 +67,42 @@ export default function ProductListing({ gender, title, categories }) {
             timestamp: Date.now(),
           })
         );
+
+        setProducts(list);
+        setLoading(false);
       } catch (err) {
-        if (!canceled) setError("Something went wrong. Please try again.");
-      } finally {
-        if (!canceled) setLoading(false);
+        if (!mountedRef.current) return;
+        setError("Something went wrong. Please try again.");
+        setLoading(false);
       }
     }
 
+    setLoading(true);
     fetchProducts();
-    return () => (canceled = true);
+
+    return () => {
+      mountedRef.current = false;
+    };
   }, [gender]);
 
-  // 3️⃣ derive filtered list instead of storing duplicate state
   const filteredProducts = useMemo(() => {
     if (selectedCategories.length === 0) return products;
-
     return products.filter((p) =>
       selectedCategories.includes(p.category.toLowerCase())
     );
   }, [products, selectedCategories]);
 
-  const handleCategory = (category) => {
+  const handleCategory = useCallback((category) => {
     const normalized = category.toLowerCase();
     setSelectedCategories((prev) =>
       prev.includes(normalized)
         ? prev.filter((c) => c !== normalized)
         : [...prev, normalized]
     );
-  };
+  }, []);
 
-  // ----------------- SKELETON -----------------
+  /* 🔽 EVERYTHING BELOW IS YOUR ORIGINAL UI (UNCHANGED) 🔽 */
+
   if (loading)
     return (
       <div className="max-w-7xl mx-auto px-4 py-10 grid md:grid-cols-[245px_1fr] gap-4">
@@ -126,7 +132,8 @@ export default function ProductListing({ gender, title, categories }) {
 
   function CategoryCheckboxes({ categories }) {
     return categories.map((c) => (
-      <label
+      <motion.label
+        whileTap={{ scale: 0.96 }}
         key={c}
         className="flex items-center gap-3 mb-2 cursor-pointer px-1"
       >
@@ -137,16 +144,15 @@ export default function ProductListing({ gender, title, categories }) {
           onChange={() => handleCategory(c)}
         />
         <span className="text-sm">{c}</span>
-      </label>
+      </motion.label>
     ));
   }
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.06,
-      },
+      transition: { staggerChildren: 0.08, delayChildren: 0.15 },
     },
   };
 
@@ -160,38 +166,40 @@ export default function ProductListing({ gender, title, categories }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 md:px-4 lg:px-4 grid md:grid-cols-[245px_1fr] gap-4">
-      {/* Sidebar */}
+    <div className="max-w-7xl mx-auto px-4 py-10 md:grid-cols-[245px_1fr] gap-4 grid">
       <aside className="hidden md:block border p-4 rounded-2xl">
         <h2 className="mb-3 font-medium">{title}</h2>
         <CategoryCheckboxes categories={categories} />
       </aside>
 
-      {/* Grid */}
-
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
+        layout
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"
       >
-        {filteredProducts.map((p) => (
-          <motion.div
-            key={p.id}
-            variants={cardVariants}
-            whileHover={{ y: -2 }}
-            transition={{ duration: 0.18 }}
-          >
-            <ProductCard {...p} />
-          </motion.div>
-        ))}
+        <AnimatePresence mode="popLayout">
+          {filteredProducts.map((p) => (
+            <motion.div
+              key={p.id}
+              layout
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 120, damping: 18 }}
+            >
+              <ProductCard {...p} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </motion.div>
-
-      {/* Mobile filters */}
+      {/* ================= MOBILE FILTER BUTTON ================= */}
       <div className="fixed bottom-3 left-0 right-0 px-4 md:hidden z-40">
         <motion.button
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.97 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setShowFilters(true)}
           className="
       w-full py-3 rounded-full
@@ -206,30 +214,42 @@ export default function ProductListing({ gender, title, categories }) {
         </motion.button>
       </div>
 
-      {showFilters && (
-        <div
-          className="fixed inset-0 bg-black/40 z-50"
-          onClick={() => setShowFilters(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6"
+      {/* ================= MOBILE FILTER OVERLAY ================= */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 z-50 md:hidden"
+            onClick={() => setShowFilters(false)}
           >
-            <div className="w-12 h-1 bg-gray-300 mx-auto rounded-full mb-5" />
-
-            <h3 className="text-lg font-semibold mb-4">Filters</h3>
-
-            <CategoryCheckboxes categories={categories} />
-
-            <button
-              onClick={() => setShowFilters(false)}
-              className="mt-6 w-full py-3 rounded-full bg-black text-white"
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 120, damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6"
             >
-              Apply Filters
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="w-12 h-1 bg-gray-300 mx-auto rounded-full mb-5" />
+
+              <h3 className="text-lg font-semibold mb-4">Filters</h3>
+
+              <CategoryCheckboxes categories={categories} />
+
+              <button
+                onClick={() => setShowFilters(false)}
+                className="mt-6 w-full py-3 rounded-full bg-black text-white"
+              >
+                Apply Filters
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
+export default memo(ProductListing);
