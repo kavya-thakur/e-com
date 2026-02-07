@@ -13,7 +13,7 @@ export default function Footer() {
           transition={{ duration: 0.35 }}
         >
           <Link to="/">
-            <h1 className="text-4xl md:text-5xl font-serif tracking-tight">
+            <h1 className="text-4xl text-red md:text-5xl font-serif tracking-tight">
               KAVYASS
             </h1>
           </Link>
@@ -65,7 +65,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="absolute  w-full text-center bottom-0 translate-y-[65%] md:translate-y-[45%] lg:translate-y-[75%]">
-        <h1 className="tracking-wider text-[clamp(4rem,20vw,18rem)] text-black opacity-40 font-bold ">
+        <h1 className="tracking-wider text-[clamp(4rem,20vw,18rem)] text-red opacity-90 font-bold ">
           KAVYASS
         </h1>
       </div>
@@ -82,7 +82,9 @@ function FooterColumn({ title, links }) {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h4 className="text-sm font-medium mb-3 tracking-wide">{title}</h4>
+      <h4 className="text-sm font-medium mb-3 tracking-wide text-red">
+        {title}
+      </h4>
 
       <ul className="space-y-2 text-sm">
         {links.map((link, i) => (

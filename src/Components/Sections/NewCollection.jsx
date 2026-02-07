@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, memo } from "react";
 import ProductCard from "../smallComponents/ProductCard";
 
 const CACHE_KEY = "new_collection_cache";
-let memoryCache = null; 
+let memoryCache = null;
 
 const NewCollection = () => {
   const [products, setProducts] = useState(() => {
@@ -19,7 +19,7 @@ const NewCollection = () => {
   useEffect(() => {
     mountedRef.current = true;
 
-    if (products.length > 0) return; 
+    if (products.length > 0) return;
 
     const fetchProducts = async () => {
       try {
@@ -65,7 +65,7 @@ const NewCollection = () => {
           <h4>effortless everyday elegance.</h4>
         </div>
 
-        <div className="text-5xl tracking-tighter font-serif leading-none md:text-6xl relative w-full">
+        <div className="text-5xl text-red tracking-tighter font-serif leading-none md:text-6xl relative w-full">
           <h3>NEW</h3>
           <h3>COLLECTION</h3>
 

@@ -44,7 +44,7 @@ export default function SearchOverlay({ onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-white z-[70] p-6"
+      className="fixed inset-0 bg-white z-[999] p-6"
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-6">

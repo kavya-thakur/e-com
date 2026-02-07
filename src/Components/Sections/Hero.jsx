@@ -84,21 +84,34 @@ const Hero = () => {
           initial="hidden"
           animate="visible"
           transition={{ delay: 0.25 }}
-          className="uppercase tracking-[0.3em] text-xs text-white/70 mt-30"
+          className="uppercase tracking-[0.3em] text-xs text-warm-gradient mt-30"
         >
           New Season · Limited Drop
         </motion.span>
 
         {/* HEADLINE  */}
+
         <motion.h1
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="absolute max-w-[54rem] bottom-5 md:bottom-3 left-0 text-start text-[8vh] md:text-[11vh] lg:text-[14vh] font-serif text-white flex flex-wrap gap-x-[0.35em] leading-none"
+          className="
+          absolute
+          max-w-[54rem]
+          bottom-5 md:bottom-3 left-0
+          text-start
+          text-[8vh] md:text-[11vh] lg:text-[14vh]
+          font-serif
+          flex flex-wrap gap-x-[0.35em]
+          leading-none"
         >
           {words.map((word, i) => (
-            <motion.span key={i} variants={wordVariants}>
-              {word}
+            <motion.span
+              key={i}
+              variants={wordVariants}
+              className="inline-block"
+            >
+              <span className="text-warm-gradient inline-block">{word}</span>
             </motion.span>
           ))}
         </motion.h1>
@@ -111,7 +124,7 @@ const Hero = () => {
         >
           <motion.h6
             variants={revealMask}
-            className="tracking-wider md:p-10 text-white text-md md:text-2xl text-start font-semibold"
+            className="tracking-wider md:p-10 text-warm-gradient text-md md:text-2xl text-start font-semibold"
           >
             Modern silhouettes crafted with premium fabrics for effortless
             everyday elegance.
@@ -127,12 +140,48 @@ const Hero = () => {
           className="absolute top-105 md:top-90 right-15 md:right-55"
         >
           <Link to={"/men"}>
-            <button className="group px-6 py-3 backdrop-blur-sm bg-white/10 text-white text-xs md:text-sm md:tracking-wide rounded-full flex gap-2 items-center hover:text-white/80">
+            <button
+              className="
+    group
+    px-6 py-3
+    backdrop-blur-sm
+    bg-white/10
+    text-white
+    text-xs md:text-sm md:tracking-wide
+    rounded-full
+    flex items-center gap-2
+    overflow-hidden
+    cursor-pointer
+  "
+            >
               <span>Explore Collection</span>
 
-              <motion.span className="inline-flex">
-                <MoveRight size={20} />
-              </motion.span>
+              <span className="relative w-5 h-5 overflow-hidden">
+                {/* icon 1 */}
+                <span
+                  className="
+        absolute inset-0
+        flex items-center justify-center
+        transition-transform duration-300 ease-out
+        group-hover:translate-x-full
+      "
+                >
+                  <MoveRight size={20} />
+                </span>
+
+                {/* icon 2 */}
+                <span
+                  className="
+        absolute inset-0
+        flex items-center justify-center
+        -translate-x-full
+        transition-transform duration-300 ease-out
+        group-hover:translate-x-0
+      "
+                >
+                  <MoveRight size={20} />
+                </span>
+              </span>
             </button>
           </Link>
         </motion.div>
