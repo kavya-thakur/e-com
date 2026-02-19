@@ -112,13 +112,19 @@ export default function Checkout() {
   // };
 
   const createPaymentOrder = async (orderMetadata) => {
-    // 1. Clean the cart items inside the helper to keep metadata light
-    const cleanItems = orderMetadata.items.map((item) => ({
-      id: item.id || "unknown",
-      name: (item.name || "Product").toString().substring(0, 50),
-      price: Number(item.price) || 0,
-      qty: Number(item.qty) || 1,
+    // 1. ULTRA-CLEAN ITEMS: Only send IDs and Qty to save space
+    const slimItems = orderMetadata.items.map((item) => ({
+      id: item.id,
+      q: item.qty, // Using 'q' instead of 'qty' saves characters
     }));
+
+    // 2. MINIMAL METADATA: Removing redundant info to stay under 250 chars
+    const slimMetadata = {
+      items: slimItems,
+      uid: orderMetadata.userId,
+      // We only send the street to keep it short
+      addr: orderMetadata.address.substring(0, 50),
+    };
 
     const cleanPhone = orderMetadata.phone.replace(/\D/g, "").slice(-10);
 
@@ -135,17 +141,14 @@ export default function Checkout() {
             email: orderMetadata.email.trim(),
             phone: cleanPhone,
           },
-          // We pass the cleaned items back into the metadata here
-          metadata: { ...orderMetadata, items: cleanItems },
+          // Sending the slim version here
+          metadata: slimMetadata,
         }),
       },
     );
 
     const data = await res.json();
-    if (!res.ok) {
-      console.error("Cashfree API Error:", data);
-      throw new Error(data.message || "Server rejected order creation");
-    }
+    if (!res.ok) throw new Error(data.message || "Server error");
     return data;
   };
 
