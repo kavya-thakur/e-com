@@ -43,69 +43,79 @@
 // });
 
 // export default router;
-
 import express from "express";
 import { db } from "../firebaseAdmin.js";
+import admin from "firebase-admin"; // To use serverTimestamp
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
     const event = req.body;
-    console.log("🔔 Webhook received for Order:", event?.data?.order?.order_id);
+    const orderData = event?.data?.order;
+    const paymentData = event?.data?.payment;
 
-    const orderId = event?.data?.order?.order_id;
-    const paymentStatus = event?.data?.payment?.payment_status;
-    const orderNote = event?.data?.order?.order_note; // This is our metadata string
+    console.log("🔔 Webhook received for Order:", orderData?.order_id);
+
+    const orderId = orderData?.order_id;
+    const paymentStatus = paymentData?.payment_status;
+    const orderNote = orderData?.order_note;
 
     if (!orderId) return res.status(400).send("No order id");
 
-    // --- STRATEGY: ONLY SAVE ON SUCCESS ---
     if (paymentStatus === "SUCCESS") {
       if (!orderNote) {
-        console.error("❌ No metadata found in order_note for success payment");
+        console.error("❌ No metadata found in order_note");
         return res.status(400).send("Missing order metadata");
       }
 
-      // 1. Parse the stringified metadata back into an object
       const details = JSON.parse(orderNote);
 
-      // 2. Create the document in the 'orders' collection
-      // We use .doc(orderId).set() to prevent any potential duplicate saves
+      // --- SMART MAPPING ---
+      // This handles both the "Full" metadata and the "Minimal" (slim) version
       await db
         .collection("orders")
         .doc(orderId)
-        .set({
-          order_id: orderId,
-          status: "paid",
-          items: details.items,
-          customer: {
-            name: details.customerName,
-            address: details.address,
-            email: details.email,
-            phone: details.phone,
+        .set(
+          {
+            order_id: orderId,
+            status: "paid",
+            // Use .q (slim) or .qty (full)
+            items:
+              details.items?.map((item) => ({
+                id: item.id,
+                qty: item.q || item.qty || 1,
+                name: item.name || "Product",
+              })) || [],
+            customer: {
+              name: details.customerName || "Customer",
+              address:
+                details.address || details.addr || "Address in User Profile",
+              email: details.email || "",
+              phone: details.phone || "",
+            },
+            userId: details.userId || details.uid || "guest",
+            pricing: {
+              subtotal: details.subtotal || 0,
+              shipping: details.shipping || 0,
+              total: details.total || orderData.order_amount, // Fallback to Cashfree's amount
+            },
+            paidAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            payment_gateway: "cashfree",
+            cashfree_reference: paymentData.cf_payment_id,
           },
-          userId: details.userId,
-          pricing: {
-            subtotal: details.subtotal,
-            shipping: details.shipping,
-            total: details.total,
-          },
-          paidAt: new Date(), // Server timestamp for payment
-          createdAt: new Date(), // Server timestamp for record creation
-          payment_gateway: "cashfree",
-        });
+          { merge: true },
+        );
 
       console.log(`✅ Order ${orderId} successfully created in Firestore.`);
       return res.status(200).send("Order Created");
     }
 
-    // --- STRATEGY: IGNORE NON-SUCCESS EVENTS ---
-    // We don't save FAILED or CANCELLED orders to keep the DB clean
     console.log(
-      `ℹ️ Payment status is ${paymentStatus}. No document created for ${orderId}.`,
+      `ℹ️ Payment status is ${paymentStatus}. No creation for ${orderId}.`,
     );
-    res.status(200).send("Webhook acknowledged without creation");
+    res.status(200).send("Acknowledged");
   } catch (err) {
     console.error("❌ Webhook processing failed:", err);
     res.status(500).send("fail");

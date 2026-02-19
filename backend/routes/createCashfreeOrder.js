@@ -84,7 +84,18 @@ router.post("/", async (req, res) => {
     const cleanPhone = customer.phone.replace(/\D/g, "").slice(-10);
 
     // 2. Prepare Order Note (Truncate if too long for Cashfree limits)
-    const orderNote = JSON.stringify(metadata).substring(0, 500);
+    const orderNote = JSON.stringify(metadata || {});
+    if (orderNote.length > 250) {
+      console.warn("⚠️ Metadata too long, stripping down to essentials");
+      // If too long, just send the bare minimum so the webhook doesn't crash
+      const minimalMetadata = {
+        uid: metadata.userId || metadata.uid || "guest",
+        items: (metadata.items || []).map((i) => ({ id: i.id, q: i.qty })),
+      };
+      var finalNote = JSON.stringify(minimalMetadata);
+    } else {
+      var finalNote = orderNote;
+    }
 
     const response = await fetch("https://sandbox.cashfree.com/pg/orders", {
       method: "POST",
@@ -103,7 +114,7 @@ router.post("/", async (req, res) => {
           customer_email: customer.email,
           customer_phone: cleanPhone,
         },
-        order_note: orderNote,
+        order_note: finalNote,
         order_meta: {
           return_url: `https://kavyass.vercel.app/payment-result?order_id=${orderId}`,
           notify_url: "https://ecommerce-rx1m.onrender.com/api/cashfreewebhook",
