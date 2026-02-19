@@ -1,11 +1,22 @@
 import express from "express";
 import fetch from "node-fetch";
+import { db } from "../firebaseAdmin.js";
 
 const router = express.Router();
 
 router.get("/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
+
+    const orderDoc = await db.collection("orders").doc(orderId).get();
+    const orderData = orderDoc.data();
+
+    if (orderData?.status === "paid") {
+      return res.json({ status: "paid", order_id: orderId });
+    }
+    if (orderData?.status === "failed") {
+      return res.json({ status: "failed", order_id: orderId });
+    }
 
     const response = await fetch(
       `https://sandbox.cashfree.com/pg/orders/${orderId}`,
@@ -21,7 +32,6 @@ router.get("/:orderId", async (req, res) => {
     );
 
     if (!response.ok) {
-      // return here prevents code from continuing
       return res.status(response.status).json({ status: "error" });
     }
 
@@ -32,9 +42,7 @@ router.get("/:orderId", async (req, res) => {
     if (cfStatus === "PAID") {
       status = "paid";
     } else if (
-      cfStatus === "FAILED" ||
-      cfStatus === "CANCELLED" ||
-      cfStatus === "EXPIRED"
+      ["FAILED", "CANCELLED", "EXPIRED", "USER_DROPPED"].includes(cfStatus)
     ) {
       status = "failed";
     } else if (cfStatus === "ACTIVE") {
@@ -43,14 +51,9 @@ router.get("/:orderId", async (req, res) => {
       status = "failed";
     }
 
-    // REMOVED THE DUPLICATE res.json CALL HERE
-    return res.json({
-      status: status,
-      order_id: orderId,
-    });
+    return res.json({ status, order_id: orderId });
   } catch (err) {
     console.error("Payment Check Error:", err);
-    // Safety check: only send error if headers haven't been sent yet
     if (!res.headersSent) {
       return res.status(500).json({ message: "Verification failed" });
     }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
@@ -8,13 +8,14 @@ export default function PaymentResult() {
   const orderId = params.get("order_id");
   const [status, setStatus] = useState("checking");
 
+  // Use a Ref to hold the interval ID to ensure it can be cleared from any scope
+  const pollIntervalRef = useRef(null);
+
   useEffect(() => {
     if (!orderId) {
       setStatus("failed");
       return;
     }
-
-    let pollInterval;
 
     const checkPayment = async () => {
       try {
@@ -22,17 +23,20 @@ export default function PaymentResult() {
           `https://ecommerce-rx1m.onrender.com/api/checkPaymentStatus/${orderId}`,
         );
 
-        // If server is down, don't spin forever
-        if (!res.ok) throw new Error("Server not responding");
+        if (!res.ok) {
+          console.warn("Server response not OK, retrying...");
+          return;
+        }
 
         const data = await res.json();
 
-        // Normalize status to lowercase to avoid "PAID" vs "paid" bugs
+        // Normalize status to lowercase
         const currentStatus = data.status?.toLowerCase();
+        console.log("Current Status:", currentStatus);
 
         if (currentStatus === "paid" || currentStatus === "success") {
           setStatus("success");
-          if (pollInterval) clearInterval(pollInterval);
+          stopPolling();
         } else if (
           currentStatus === "failed" ||
           currentStatus === "cancelled" ||
@@ -40,32 +44,51 @@ export default function PaymentResult() {
           currentStatus === "user_dropped"
         ) {
           setStatus("failed");
-          if (pollInterval) clearInterval(pollInterval);
+          stopPolling();
         } else if (
           currentStatus === "checking" ||
-          currentStatus === "pending_payment"
+          currentStatus === "pending_payment" ||
+          currentStatus === "active"
         ) {
-          setStatus("checking"); // Continue the loop
+          setStatus("checking");
         } else {
-          // Safety: If we get an unknown status, stop after a few tries
-          // or treat as failed to prevent infinite loading
-          console.log("Unknown status received:", currentStatus);
+          // Fallback for unknown statuses
+          console.log("Unexpected status received, continuing poll...");
         }
       } catch (err) {
         console.error("Polling error:", err);
-        // We don't clear interval here so it can try again in 4 seconds
       }
     };
 
-    // 1. Run immediately
+    const stopPolling = () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+        console.log("Polling stopped.");
+      }
+    };
+
+    // 1. Initial check immediately
     checkPayment();
 
-    // 2. Set the interval to the variable we defined
-    pollInterval = setInterval(checkPayment, 4000);
+    // 2. Set the interval to the ref
+    pollIntervalRef.current = setInterval(checkPayment, 4000);
 
-    // 3. Clean up when the user leaves the page
-    return () => clearInterval(pollInterval);
-  }, [orderId]);
+    // 3. Safety Timeout: If still checking after 60 seconds, stop and show failed
+    const safetyTimeout = setTimeout(() => {
+      if (status === "checking") {
+        console.warn("Safety timeout reached.");
+        stopPolling();
+        setStatus("failed");
+      }
+    }, 60000);
+
+    // 4. Clean up
+    return () => {
+      stopPolling();
+      clearTimeout(safetyTimeout);
+    };
+  }, [orderId, status]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center bg-white px-6">
