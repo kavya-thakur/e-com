@@ -65,7 +65,7 @@ const NewCollection = () => {
           <h4>effortless everyday elegance.</h4>
         </div>
 
-        <div className="text-5xl text-red tracking-tighter font-serif leading-none md:text-6xl relative w-full">
+        <div className="text-5xl text-neutral-900 tracking-tighter font-serif leading-none md:text-6xl relative w-full">
           <h3>NEW</h3>
           <h3>COLLECTION</h3>
 

@@ -19,7 +19,7 @@ export default function TextReveal({ text, className }) {
         {words.map((word, i) => (
           <motion.h3
             key={i}
-            className="inline-block overflow-hidden text-red"
+            className="inline-block overflow-hidden text-neutral-900"
             variants={{
               hidden: { y: "120%", opacity: 0 },
               visible: {

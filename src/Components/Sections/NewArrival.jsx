@@ -40,19 +40,19 @@ const NewArrival = () => {
   useEffect(() => {
     mountedRef.current = true;
 
-    if (products.length > 0) return; 
+    if (products.length > 0) return;
 
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
-          "https://695bc5731d8041d5eeb8581b.mockapi.io/api/v1/products"
+          "https://695bc5731d8041d5eeb8581b.mockapi.io/api/v1/products",
         );
 
         if (!mountedRef.current) return;
 
         const sliced = res.data.slice(8, 16);
 
-        memoryCache = sliced; 
+        memoryCache = sliced;
         localStorage.setItem(CACHE_KEY, JSON.stringify(sliced));
 
         setProducts(sliced);
