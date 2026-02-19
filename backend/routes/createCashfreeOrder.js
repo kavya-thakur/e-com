@@ -69,7 +69,6 @@
 // });
 
 // export default router;
-
 import express from "express";
 import fetch from "node-fetch";
 
@@ -80,21 +79,23 @@ router.post("/", async (req, res) => {
     console.log("➡️ /createCashfreeOrder called");
     const { amount, orderId, customer, metadata } = req.body;
 
-    // 1. Sanitize Phone Number (Strict 10 digits for Cashfree)
     const cleanPhone = customer.phone.replace(/\D/g, "").slice(-10);
 
-    // 2. Prepare Order Note (Truncate if too long for Cashfree limits)
-    const orderNote = JSON.stringify(metadata || {});
-    if (orderNote.length > 250) {
-      console.warn("⚠️ Metadata too long, stripping down to essentials");
-      // If too long, just send the bare minimum so the webhook doesn't crash
+    // 1. Properly scope and calculate the note
+    let finalNote = JSON.stringify(metadata || {});
+
+    if (finalNote.length > 250) {
+      console.warn("⚠️ Metadata too long, stripping to essentials");
       const minimalMetadata = {
         uid: metadata.userId || metadata.uid || "guest",
         items: (metadata.items || []).map((i) => ({ id: i.id, q: i.qty })),
       };
-      var finalNote = JSON.stringify(minimalMetadata);
-    } else {
-      var finalNote = orderNote;
+      finalNote = JSON.stringify(minimalMetadata);
+    }
+
+    // 2. Final check: if still over 250 (rare), truncate hard to avoid Cashfree rejection
+    if (finalNote.length > 250) {
+      finalNote = finalNote.substring(0, 249);
     }
 
     const response = await fetch("https://sandbox.cashfree.com/pg/orders", {
@@ -107,14 +108,14 @@ router.post("/", async (req, res) => {
       },
       body: JSON.stringify({
         order_id: orderId,
-        order_amount: Number(amount).toFixed(2), // Ensure numeric format
+        order_amount: Number(amount).toFixed(2),
         order_currency: "INR",
         customer_details: {
           customer_id: customer.id || "guest",
           customer_email: customer.email,
           customer_phone: cleanPhone,
         },
-        order_note: finalNote,
+        order_note: finalNote, // This is now guaranteed to be a safe string
         order_meta: {
           return_url: `https://kavyass.vercel.app/payment-result?order_id=${orderId}`,
           notify_url: "https://ecommerce-rx1m.onrender.com/api/cashfreewebhook",
@@ -124,26 +125,16 @@ router.post("/", async (req, res) => {
 
     const data = await response.json();
 
-    // 3. Handle Cashfree Rejection (Crucial!)
     if (!response.ok) {
       console.error("❌ Cashfree API Error:", data);
-      return res.status(response.status).json({
-        success: false,
-        message: data.message || "Cashfree initialization failed",
-        details: data,
-      });
+      return res.status(response.status).json(data);
     }
 
-    // 4. Success
     console.log("✅ Cashfree Session Created:", data.payment_session_id);
     return res.json(data);
   } catch (err) {
     console.error("❌ Server Error:", err.message);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error: err.message,
-    });
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

@@ -112,18 +112,20 @@ export default function Checkout() {
   // };
 
   const createPaymentOrder = async (orderMetadata) => {
-    // 1. ULTRA-CLEAN ITEMS: Only send IDs and Qty to save space
+    // 1. SLIM ITEMS: Keep it light
     const slimItems = orderMetadata.items.map((item) => ({
       id: item.id,
-      q: item.qty, // Using 'q' instead of 'qty' saves characters
+      q: item.qty,
+      n: (item.name || "Product").substring(0, 20), // Added 'n' for name fallback
     }));
 
-    // 2. MINIMAL METADATA: Removing redundant info to stay under 250 chars
+    // 2. REVISED SLIM METADATA:
+    // We must include fields the webhook expects or uses as fallbacks
     const slimMetadata = {
       items: slimItems,
       uid: orderMetadata.userId,
-      // We only send the street to keep it short
-      addr: orderMetadata.address.substring(0, 50),
+      name: orderMetadata.customerName, // Added back (names are usually short)
+      addr: orderMetadata.address.substring(0, 40),
     };
 
     const cleanPhone = orderMetadata.phone.replace(/\D/g, "").slice(-10);
@@ -141,7 +143,6 @@ export default function Checkout() {
             email: orderMetadata.email.trim(),
             phone: cleanPhone,
           },
-          // Sending the slim version here
           metadata: slimMetadata,
         }),
       },
