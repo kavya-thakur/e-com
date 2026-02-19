@@ -21,14 +21,13 @@ router.get("/:orderId", async (req, res) => {
     );
 
     if (!response.ok) {
+      // return here prevents code from continuing
       return res.status(response.status).json({ status: "error" });
     }
 
     const data = await response.json();
-
     let status = "checking";
-
-    const cfStatus = data.order_status.toUpperCase();
+    const cfStatus = data.order_status?.toUpperCase();
 
     if (cfStatus === "PAID") {
       status = "paid";
@@ -44,14 +43,17 @@ router.get("/:orderId", async (req, res) => {
       status = "failed";
     }
 
-    res.json({ status: status, order_id: orderId });
-    res.json({
+    // REMOVED THE DUPLICATE res.json CALL HERE
+    return res.json({
       status: status,
       order_id: orderId,
     });
   } catch (err) {
     console.error("Payment Check Error:", err);
-    res.status(500).json({ message: "Verification failed" });
+    // Safety check: only send error if headers haven't been sent yet
+    if (!res.headersSent) {
+      return res.status(500).json({ message: "Verification failed" });
+    }
   }
 });
 
