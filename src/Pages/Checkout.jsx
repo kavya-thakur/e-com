@@ -112,10 +112,8 @@ export default function Checkout() {
   // };
 
   const createPaymentOrder = async () => {
-    // 1. STRIP THE CART: Added safety checks for item properties
     const cleanItems = cart.map((item) => ({
       id: item.id || "unknown",
-      // Safety check: if name is missing, use 'Product' as default
       name: (item.name || "Product").toString().substring(0, 50),
       price: Number(item.price) || 0,
       qty: Number(item.qty) || 1,
@@ -129,7 +127,6 @@ export default function Checkout() {
       total: total,
     };
 
-    // 2. CLEAN THE PHONE: Cashfree Sandbox fails if phone is not exactly 10 digits
     const cleanPhone = phone.replace(/\D/g, "").slice(-10);
 
     const res = await fetch(
@@ -138,7 +135,7 @@ export default function Checkout() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: Number(total), // Ensure it's a number, not a string
+          amount: Number(total),
           orderId: "KAVYASS_" + Date.now(),
           customer: {
             id: auth.currentUser?.uid || "guest",
@@ -150,10 +147,10 @@ export default function Checkout() {
       },
     );
 
-    // 3. BETTER ERROR HANDLING: This helps you see WHY it failed
     if (!res.ok) {
       const errorData = await res.json();
-      console.error("Cashfree Reject Reason:", errorData);
+      // This will print the EXACT error from Cashfree (e.g., "invalid phone", "amount too small")
+      console.error("CASHFREE REJECTED THIS:", errorData);
       throw new Error(errorData.message || "Payment failed to initialize");
     }
 
