@@ -87,7 +87,6 @@ export default function Checkout() {
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-
   const createPaymentOrder = async (orderMetadata) => {
     const cleanPhone = orderMetadata.phone.replace(/\D/g, "").slice(-10);
 
