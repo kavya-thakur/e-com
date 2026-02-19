@@ -1,313 +1,3 @@
-// import { motion, AnimatePresence } from "framer-motion";
-// import { useCart } from "../Context/CartContext";
-// import { useState, useEffect } from "react";
-// import { db, auth } from "../firebase";
-// import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-// import Ordersummary from "../Components/smallComponents/Ordersummary";
-// import { Loader2, ArrowRight } from "lucide-react";
-
-// const Skeleton = () => (
-//   <div className="animate-pulse space-y-12 w-full">
-//     <div className="space-y-4">
-//       <div className="h-4 w-32 bg-neutral-200 rounded" />
-//       <div className="h-12 w-full bg-neutral-100 rounded" />
-//       <div className="h-12 w-full bg-neutral-100 rounded" />
-//     </div>
-//     <div className="space-y-4">
-//       <div className="h-4 w-32 bg-neutral-200 rounded" />
-//       <div className="grid grid-cols-2 gap-8">
-//         <div className="h-12 w-full bg-neutral-100 rounded" />
-//         <div className="h-12 w-full bg-neutral-100 rounded" />
-//       </div>
-//       <div className="h-12 w-full bg-neutral-100 rounded" />
-//     </div>
-//   </div>
-// );
-
-// export default function Checkout() {
-//   const { cart } = useCart();
-//   const [isInitialLoading, setIsInitialLoading] = useState(true);
-
-//   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-//   const shipping = subtotal > 0 ? 49 : 0;
-//   const total = subtotal + shipping;
-
-//   const [email, setEmail] = useState("");
-//   const [phone, setPhone] = useState("");
-//   const [first, setFirst] = useState("");
-//   const [last, setLast] = useState("");
-//   const [street, setStreet] = useState("");
-//   const [city, setCity] = useState("");
-//   const [zip, setZip] = useState("");
-//   const [errors, setErrors] = useState({});
-//   const [loading, setLoading] = useState(false);
-//   const [msg, setMsg] = useState("");
-
-//   const validate = () => {
-//     const e = {};
-//     if (!email) e.email = "Email is required";
-//     else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Enter a valid email";
-//     if (!phone) e.phone = "Phone is required";
-//     else if (phone.length < 10) e.phone = "Enter a valid phone";
-//     if (!first) e.first = "First name required";
-//     if (!street) e.street = "Address required";
-//     if (!city) e.city = "City required";
-//     if (!zip) e.zip = "Postal code required";
-//     else if (!/^\d+$/.test(zip)) e.zip = "Numbers only";
-
-//     setErrors(e);
-//     return Object.keys(e).length === 0;
-//   };
-
-//   useEffect(() => {
-//     const timer = setTimeout(() => setIsInitialLoading(false), 800);
-//     const saved = JSON.parse(localStorage.getItem("checkout-info"));
-//     if (saved) {
-//       setEmail(saved.email || "");
-//       setPhone(saved.phone || "");
-//       setFirst(saved.first || "");
-//       setLast(saved.last || "");
-//       setStreet(saved.street || "");
-//       setCity(saved.city || "");
-//       setZip(saved.zip || "");
-//     }
-//     return () => clearTimeout(timer);
-//   }, []);
-
-//   const createPaymentOrder = async () => {
-//     const res = await fetch(
-//       "https://ecommerce-rx1m.onrender.com/api/createCashfreeOrder",
-//       {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({
-//           amount: total,
-//           orderId: "store_" + Date.now(),
-//           customer: { id: auth.currentUser?.uid || "guest", email, phone },
-//         }),
-//       },
-//     );
-//     return await res.json();
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setMsg("");
-//     if (!validate()) return;
-//     setLoading(true);
-
-//     try {
-//       const user = auth.currentUser;
-//       const order = await createPaymentOrder();
-//       if (!order?.payment_session_id) throw new Error("Payment failed");
-
-//       await addDoc(collection(db, "orders"), {
-//         userId: user?.uid || "guest",
-//         items: cart,
-//         customer: {
-//           email,
-//           phone,
-//           name: `${first} ${last}`,
-//           address: `${street}, ${city} - ${zip}`,
-//         },
-//         subtotal,
-//         shipping,
-//         total,
-//         status: "pending_payment",
-//         order_id: order.order_id,
-//         createdAt: serverTimestamp(),
-//       });
-
-//       window.Cashfree({ mode: "sandbox" }).checkout({
-//         paymentSessionId: order.payment_session_id,
-//         redirectTarget: "_self",
-//       });
-//     } catch (err) {
-//       setMsg("Something went wrong. Try again.");
-//     }
-//     setLoading(false);
-//   };
-
-//   useEffect(() => {
-//     const script = document.createElement("script");
-//     script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
-//     script.async = true;
-//     document.body.appendChild(script);
-//     return () => {
-//       if (document.body.contains(script)) document.body.removeChild(script);
-//     };
-//   }, []);
-
-//   const inputClass =
-//     "w-full border-b border-neutral-200 py-3 text-sm outline-none focus:border-black transition-colors bg-transparent placeholder:text-neutral-300 placeholder:uppercase placeholder:tracking-widest placeholder:text-[10px]";
-//   const errorStyle =
-//     "text-[9px] uppercase tracking-widest text-red-500 mt-1 block";
-
-//   return (
-//     <div className="max-w-7xl mx-auto px-6 pt-8 pb-20 font-sans text-black min-h-screen">
-//       <motion.h1
-//         initial={{ opacity: 0, x: -20 }}
-//         animate={{ opacity: 1, x: 0 }}
-//         className="text-4xl md:text-6xl font-light tracking-tighter uppercase mb-16"
-//       >
-//         Checkout
-//       </motion.h1>
-
-//       <AnimatePresence mode="wait">
-//         {isInitialLoading ? (
-//           <motion.div
-//             key="skeleton"
-//             initial={{ opacity: 0 }}
-//             animate={{ opacity: 1 }}
-//             exit={{ opacity: 0 }}
-//             className="grid lg:grid-cols-2 gap-16 lg:gap-24"
-//           >
-//             <Skeleton />
-//             <div className="hidden lg:block h-[400px] bg-neutral-50 rounded-sm animate-pulse" />
-//           </motion.div>
-//         ) : (
-//           <motion.div
-//             key="content"
-//             initial={{ opacity: 0 }}
-//             animate={{ opacity: 1 }}
-//             className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-start"
-//           >
-//             <form
-//               onSubmit={handleSubmit}
-//               id="checkout-form"
-//               className="space-y-16"
-//             >
-//               {/* Contact Section */}
-//               <section className="space-y-8">
-//                 <h2 className="text-[10px] uppercase tracking-[0.3em] font-bold text-neutral-400">
-//                   01. Contact
-//                 </h2>
-//                 <div className="space-y-6">
-//                   <div>
-//                     <input
-//                       placeholder="Email"
-//                       className={inputClass}
-//                       value={email}
-//                       onChange={(e) => setEmail(e.target.value)}
-//                     />
-//                     {errors.email && (
-//                       <span className={errorStyle}>{errors.email}</span>
-//                     )}
-//                   </div>
-//                   <div>
-//                     <input
-//                       placeholder="Phone"
-//                       className={inputClass}
-//                       value={phone}
-//                       onChange={(e) => setPhone(e.target.value)}
-//                     />
-//                     {errors.phone && (
-//                       <span className={errorStyle}>{errors.phone}</span>
-//                     )}
-//                   </div>
-//                 </div>
-//               </section>
-
-//               {/* Shipping Section */}
-//               <section className="space-y-8">
-//                 <h2 className="text-[10px] uppercase tracking-[0.3em] font-bold text-neutral-400">
-//                   02. Shipping
-//                 </h2>
-//                 <div className="space-y-6">
-//                   <div className="grid grid-cols-2 gap-8">
-//                     <div>
-//                       <input
-//                         placeholder="First Name"
-//                         className={inputClass}
-//                         value={first}
-//                         onChange={(e) => setFirst(e.target.value)}
-//                       />
-//                       {errors.first && (
-//                         <span className={errorStyle}>{errors.first}</span>
-//                       )}
-//                     </div>
-//                     <div>
-//                       <input
-//                         placeholder="Last Name"
-//                         className={inputClass}
-//                         value={last}
-//                         onChange={(e) => setLast(e.target.value)}
-//                       />
-//                     </div>
-//                   </div>
-//                   <div>
-//                     <input
-//                       placeholder="Street Address"
-//                       className={inputClass}
-//                       value={street}
-//                       onChange={(e) => setStreet(e.target.value)}
-//                     />
-//                     {errors.street && (
-//                       <span className={errorStyle}>{errors.street}</span>
-//                     )}
-//                   </div>
-//                   <div className="grid grid-cols-3 gap-8">
-//                     <div className="col-span-2">
-//                       <input
-//                         placeholder="City"
-//                         className={inputClass}
-//                         value={city}
-//                         onChange={(e) => setCity(e.target.value)}
-//                       />
-//                       {errors.city && (
-//                         <span className={errorStyle}>{errors.city}</span>
-//                       )}
-//                     </div>
-//                     <div>
-//                       <input
-//                         placeholder="Zip"
-//                         className={inputClass}
-//                         value={zip}
-//                         onChange={(e) => setZip(e.target.value)}
-//                       />
-//                       {errors.zip && (
-//                         <span className={errorStyle}>{errors.zip}</span>
-//                       )}
-//                     </div>
-//                   </div>
-//                 </div>
-//               </section>
-//             </form>
-
-//             <div className="space-y-10 lg:sticky lg:top-24">
-//               <Ordersummary />
-//               <button
-//                 type="submit"
-//                 form="checkout-form"
-//                 disabled={loading}
-//                 className={`w-full py-5 rounded-full text-[10px] uppercase tracking-[0.3em] font-bold transition-all flex items-center justify-center gap-3 ${loading ? "bg-neutral-100 text-neutral-400" : "bg-black text-white hover:bg-neutral-800 cursor-pointer"}`}
-//               >
-//                 <AnimatePresence mode="wait">
-//                   {loading ? (
-//                     <motion.div key="l" className="flex items-center gap-3">
-//                       <Loader2 className="w-4 h-4 animate-spin" />
-//                       <span>Securing payment...</span>
-//                     </motion.div>
-//                   ) : (
-//                     <motion.div key="i" className="flex items-center gap-2">
-//                       Proceed to Payment <ArrowRight size={14} />
-//                     </motion.div>
-//                   )}
-//                 </AnimatePresence>
-//               </button>
-//               {msg && (
-//                 <p className="text-[10px] text-red-500 uppercase text-center tracking-widest">
-//                   {msg}
-//                 </p>
-//               )}
-//             </div>
-//           </motion.div>
-//         )}
-//       </AnimatePresence>
-//     </div>
-//   );
-// }
-
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../Context/CartContext";
 import { useState, useEffect } from "react";
@@ -405,6 +95,22 @@ export default function Checkout() {
     return Object.keys(e).length === 0;
   };
 
+  // const createPaymentOrder = async () => {
+  //   const res = await fetch(
+  //     "https://ecommerce-rx1m.onrender.com/api/createCashfreeOrder",
+  //     {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         amount: total,
+  //         orderId: "store_" + Date.now(),
+  //         customer: { id: auth.currentUser?.uid || "guest", email, phone },
+  //       }),
+  //     },
+  //   );
+  //   return await res.json();
+  // };
+
   const createPaymentOrder = async () => {
     const res = await fetch(
       "https://ecommerce-rx1m.onrender.com/api/createCashfreeOrder",
@@ -413,42 +119,106 @@ export default function Checkout() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: total,
-          orderId: "store_" + Date.now(),
+          orderId: "KAVYASS_" + Date.now(),
           customer: { id: auth.currentUser?.uid || "guest", email, phone },
+          // Pass the items and address here so Cashfree "remembers" them
+          order_note: JSON.stringify({
+            items: cart,
+            address: `${street}, ${city} - ${zip}`,
+            customerName: `${first} ${last}`,
+            userId: auth.currentUser?.uid || "guest",
+          }),
         }),
       },
     );
     return await res.json();
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setMsg("");
+  //   if (!validate()) return;
+  //   setLoading(true);
+
+  //   try {
+  //     const user = auth.currentUser;
+  //     const order = await createPaymentOrder();
+  //     if (!order?.payment_session_id) throw new Error("Payment failed");
+
+  //     await addDoc(collection(db, "orders"), {
+  //       userId: user?.uid || "guest",
+  //       items: cart,
+  //       customer: {
+  //         email,
+  //         phone,
+  //         name: `${first} ${last}`,
+  //         address: `${street}, ${city} - ${zip}`,
+  //       },
+  //       subtotal,
+  //       shipping,
+  //       total,
+  //       status: "pending_payment",
+  //       order_id: order.order_id,
+  //       createdAt: serverTimestamp(),
+  //     });
+
+  //     if (saveAddress && user) {
+  //       const userRef = doc(db, "users", user.uid);
+  //       await setDoc(
+  //         userRef,
+  //         {
+  //           savedAddress: { first, last, phone, street, city, zip },
+  //           lastUpdated: serverTimestamp(),
+  //         },
+  //         { merge: true },
+  //       );
+  //     }
+
+  //     window.Cashfree({ mode: "sandbox" }).checkout({
+  //       paymentSessionId: order.payment_session_id,
+  //       redirectTarget: "_self",
+  //     });
+  //   } catch (err) {
+  //     setMsg("Something went wrong. Please try again.");
+  //   }
+  //   setLoading(false);
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
+
+    // 1. Validate form fields first
     if (!validate()) return;
+
     setLoading(true);
 
     try {
       const user = auth.currentUser;
-      const order = await createPaymentOrder();
-      if (!order?.payment_session_id) throw new Error("Payment failed");
 
-      await addDoc(collection(db, "orders"), {
-        userId: user?.uid || "guest",
+      // 2. Prepare the metadata to send to your backend
+      // We send this so the Webhook knows WHAT was bought when the payment succeeds
+      const orderMetadata = {
         items: cart,
-        customer: {
-          email,
-          phone,
-          name: `${first} ${last}`,
-          address: `${street}, ${city} - ${zip}`,
-        },
+        customerName: `${first} ${last}`,
+        phone,
+        email,
+        address: `${street}, ${city} - ${zip}`,
+        userId: user?.uid || "guest",
         subtotal,
         shipping,
         total,
-        status: "pending_payment",
-        order_id: order.order_id,
-        createdAt: serverTimestamp(),
-      });
+      };
 
+      // 3. Create the Payment Order
+      // Note: Pass orderMetadata to your API so it can be stored in Cashfree's 'order_note'
+      const order = await createPaymentOrder(orderMetadata);
+
+      if (!order?.payment_session_id)
+        throw new Error("Payment failed to initialize");
+
+      // 4. NEW: SAVE ADDRESS TO PROFILE (Optional but Recommended)
+      // We still do this here so the user's profile updates immediately
       if (saveAddress && user) {
         const userRef = doc(db, "users", user.uid);
         await setDoc(
@@ -461,16 +231,21 @@ export default function Checkout() {
         );
       }
 
+      // 5. --- REMOVED addDoc(collection(db, "orders")... ---
+      // We no longer save a "pending" order. Firestore stays clean.
+
+      // 6. Launch Cashfree Modal
       window.Cashfree({ mode: "sandbox" }).checkout({
         paymentSessionId: order.payment_session_id,
         redirectTarget: "_self",
       });
     } catch (err) {
+      console.error("Checkout Error:", err);
       setMsg("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
-
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
