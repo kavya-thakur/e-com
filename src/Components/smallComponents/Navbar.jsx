@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Search, CircleUser, ShoppingCart, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchOverlay from "./SearchOverlay";
+import { useCart } from "../../Context/CartContext";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -11,6 +12,7 @@ export default function Navbar() {
 
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const { cart } = useCart();
 
   useEffect(() => {
     const onScroll = () => {
@@ -20,135 +22,160 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // lock body scroll when menu open
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    return () => (document.body.style.overflow = "");
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   const transparentNavbar = isHome && !scrolled;
+  const themeClass = transparentNavbar ? "text-white" : "text-black";
 
   return (
     <>
-      {/* ================= NAVBAR ================= */}
       <header
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300
-        ${
-          transparentNavbar
-            ? "bg-white/10 backdrop-blur-md text-white"
-            : "bg-white text-black shadow-sm"
-        }`}
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ease-in-out
+        ${transparentNavbar ? "bg-transparent" : "bg-white/80 backdrop-blur-lg shadow-sm"}`}
       >
         <div
-          className={`max-w-7xl mx-auto px-4 py-4 flex items-center justify-between relative
-          ${
-            transparentNavbar
-              ? "border-b border-white/20"
-              : "border-b border-neutral-200"
-          }`}
+          className={`max-w-7xl mx-auto px-4 py-4 flex items-center justify-between relative border-b transition-colors duration-500
+          ${transparentNavbar ? "border-white/10" : "border-neutral-100"}`}
         >
-          {/* LEFT */}
-          <nav className="hidden md:flex gap-6 text-sm uppercase tracking-wide">
-            <Link to="/women">Women</Link>
-            <Link to="/men">Men</Link>
+          {/* LEFT: Links with animated underline */}
+          <nav className="hidden md:flex gap-8 text-[11px] font-medium uppercase tracking-[0.2em]">
+            {["Women", "Men"].map((item) => (
+              <Link
+                key={item}
+                to={`/${item.toLowerCase()}`}
+                className={`relative group transition-opacity hover:opacity-70 ${themeClass}`}
+              >
+                {item}
+                <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-current transition-all duration-300 group-hover:w-full" />
+              </Link>
+            ))}
           </nav>
 
-          {/* HAMBURGER */}
+          {/* MOBILE HAMBURGER */}
           <button
             className="md:hidden relative z-[60] w-8 h-8 flex flex-col justify-center items-center"
             onClick={() => setOpen((v) => !v)}
           >
             <motion.span
-              animate={open ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
-              className={`w-6 h-[2px] rounded ${
-                transparentNavbar ? "bg-white" : "bg-black"
-              }`}
+              animate={open ? { rotate: 45, y: 1 } : { rotate: 0, y: -4 }}
+              className={`absolute w-5 h-[1.5px] transition-colors ${open ? "bg-black" : transparentNavbar ? "bg-white" : "bg-black"}`}
             />
             <motion.span
-              animate={open ? { opacity: 0 } : { opacity: 1 }}
-              className={`w-6 h-[2px] my-1 rounded ${
-                transparentNavbar ? "bg-white" : "bg-black"
-              }`}
-            />
-            <motion.span
-              animate={open ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
-              className={`w-6 h-[2px] rounded ${
-                transparentNavbar ? "bg-white" : "bg-black"
-              }`}
+              animate={open ? { rotate: -45, y: 1 } : { rotate: 0, y: 4 }}
+              className={`absolute w-5 h-[1.5px] transition-colors ${open ? "bg-black" : transparentNavbar ? "bg-white" : "bg-black"}`}
             />
           </button>
 
-          {/* LOGO */}
           <Link
             to="/"
-            className="absolute left-1/2 -translate-x-1/2 font-bold tracking-[0.25em]"
+            className={`absolute left-1/2 -translate-x-1/2 font-bold text-lg tracking-[0.4em] transition-colors duration-500 ${themeClass}`}
           >
             <h1>KAVYASS</h1>
           </Link>
 
-          {/* ICONS */}
-          <div className="flex gap-4 items-center">
-            <button onClick={() => setSearchOpen(true)}>
-              <Search
-                size={20}
-                className={transparentNavbar ? "text-white" : "text-black"}
-              />
-            </button>
+          {/* RIGHT: Icons with hover lift */}
+          <div className={`flex gap-3 items-center ${themeClass}`}>
+            <motion.button
+              whileHover={{ y: -2 }}
+              onClick={() => setSearchOpen(true)}
+              className="hover:opacity-60 transition-opacity"
+            >
+              <Search size={20} strokeWidth={1.5} />
+            </motion.button>
 
             {searchOpen && (
               <SearchOverlay onClose={() => setSearchOpen(false)} />
             )}
 
-            <Link to="/account">
-              <CircleUser
-                size={20}
-                className={transparentNavbar ? "text-white" : "text-black"}
-              />
-            </Link>
+            <motion.div whileHover={{ y: -2 }}>
+              <Link
+                to="/account"
+                className="hover:opacity-60 transition-opacity"
+              >
+                <CircleUser size={20} strokeWidth={1.5} />
+              </Link>
+            </motion.div>
 
-            <Link to="/cart">
-              <ShoppingCart
-                size={20}
-                className={transparentNavbar ? "text-white" : "text-black"}
-              />
-            </Link>
+            <motion.div whileHover={{ y: -2 }}>
+              <Link
+                to="/cart"
+                className="relative hover:opacity-60 transition-opacity"
+              >
+                <ShoppingCart size={20} strokeWidth={1.5} />
+                <AnimatePresence>
+                  {cart.length > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -top-2 -right-2 bg-black text-white invert dark:invert-0 text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full"
+                    >
+                      {cart.length}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </Link>
+            </motion.div>
           </div>
         </div>
       </header>
 
-      {/* ================= MOBILE OVERLAY (ROOT LEVEL) ================= */}
+      {/* ================= MOBILE OVERLAY ================= */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] bg-white md:hidden"
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[1001] bg-white md:hidden flex flex-col p-6"
           >
-            {/* CLOSE BUTTON */}
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-              className="absolute top-3 left-5 p-2"
-            >
-              <X size={28} className="text-black" />
-            </button>
+            <div className="flex justify-end w-full">
+              <button
+                onClick={() => setOpen(false)}
+                className="p-2 cursor-pointer hover:bg-neutral-100 rounded-full transition-colors active:scale-90"
+                aria-label="Close menu"
+              >
+                <X size={30} strokeWidth={1.5} className="text-black" />
+              </button>
+            </div>
 
-            {/* MENU CONTENT */}
-            <div className="pt-[72px] px-6">
-              <nav className="flex flex-col gap-6 text-lg uppercase tracking-wide">
-                {["Women", "Men"].map((label) => (
-                  <Link
+            <div className="flex-1 flex flex-col justify-center px-4">
+              <nav className="flex flex-col gap-8 text-4xl font-light uppercase tracking-tighter text-black">
+                {["Women", "Men", "Account", "Cart"].map((label, i) => (
+                  <motion.div
                     key={label}
-                    to={`/${label.toLowerCase()}`}
-                    onClick={() => setOpen(false)}
-                    className="border-b pb-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
                   >
-                    {label}
-                  </Link>
+                    <Link
+                      to={`/${label.toLowerCase()}`}
+                      onClick={() => setOpen(false)}
+                      className="block cursor-pointer hover:text-neutral-500 transition-colors active:translate-x-2 duration-300"
+                    >
+                      {label}
+                    </Link>
+                  </motion.div>
                 ))}
               </nav>
             </div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="pt-10 border-t border-neutral-100"
+            >
+              <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400">
+                © KAVYASS 2026
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

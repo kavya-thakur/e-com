@@ -80,60 +80,6 @@ export default function Checkout() {
     return await res.json();
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setMsg("");
-
-  //   if (!validate()) return; // ⛔ stop if invalid
-
-  //   setLoading(true);
-
-  //   try {
-  //     const user = auth.currentUser;
-  //     localStorage.setItem(
-  //       "checkout-info",
-  //       JSON.stringify({ email, phone, first, last, street, city, zip })
-  //     );
-
-  //     await addDoc(collection(db, "orders"), {
-  //       userId: user.uid,
-  //       items: cart,
-  //       customer: {
-  //         email,
-  //         phone,
-  //         name: `${first} ${last}`,
-  //         address: `${street}, ${city} - ${zip}`,
-  //       },
-  //       subtotal,
-  //       shipping,
-  //       total,
-  //       status: "pending_payment",
-  //       createdAt: serverTimestamp(),
-  //     });
-  //     const order = await createPaymentOrder();
-  //     console.log("session:", order.payment_session_id);
-
-  //     if (!order?.payment_session_id) {
-  //       console.error("Session missing:", order);
-  //       return;
-  //     }
-
-  //     const cashfree = window.Cashfree({
-  //       mode: "sandbox",
-  //     });
-
-  //     cashfree.checkout({
-  //       paymentSessionId: order.payment_session_id,
-  //       redirectTarget: "_self",
-  //     });
-  //   } catch (err) {
-  //     console.log(err);
-  //     setMsg("Something went wrong. Try again.");
-  //   }
-
-  //   setLoading(false);
-  // };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
@@ -144,14 +90,14 @@ export default function Checkout() {
     try {
       const user = auth.currentUser;
 
-      // 1️⃣ Create Cashfree order first
+      // 1️ Create Cashfree order first
       const order = await createPaymentOrder();
 
       if (!order?.payment_session_id || !order?.order_id) {
         throw new Error("Payment order creation failed");
       }
 
-      // 2️⃣ Save order to Firestore (only now)
+      // 2️ Save order to Firestore (only now)
       await addDoc(collection(db, "orders"), {
         userId: user.uid,
         items: cart,
@@ -169,7 +115,7 @@ export default function Checkout() {
         createdAt: serverTimestamp(),
       });
 
-      // 3️⃣ Start checkout
+      // 3️ Start checkout
       const cashfree = window.Cashfree({ mode: "sandbox" });
 
       cashfree.checkout({
