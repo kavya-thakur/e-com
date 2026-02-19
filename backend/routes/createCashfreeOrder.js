@@ -106,23 +106,27 @@ router.post("/", async (req, res) => {
         "x-client-secret": process.env.CASHFREE_CLIENT_SECRET,
         "x-api-version": "2022-09-01",
       },
+      // Replace your existing body: JSON.stringify({...}) with this:
       body: JSON.stringify({
-        order_id: orderId,
+        order_id: String(orderId), // Force String
         order_amount: Number(amount).toFixed(2),
         order_currency: "INR",
         customer_details: {
-          customer_id: customer.id || "guest",
-          customer_email: customer.email,
-          customer_phone: cleanPhone,
+          customer_id: String(customer.id || "guest"), // Force String
+          customer_email: String(customer.email),
+          customer_phone: String(cleanPhone), // Force String
         },
-        order_note: finalNote, // This is now guaranteed to be a safe string
+        order_note: String(finalNote), // Ensure this is a raw string
         order_meta: {
           return_url: `https://kavyass.vercel.app/payment-result?order_id=${orderId}`,
           notify_url: "https://ecommerce-rx1m.onrender.com/api/cashfreewebhook",
         },
       }),
     });
-
+    console.log(
+      `DEBUG: Sending Note to Cashfree [Length: ${finalNote.length}]:`,
+      finalNote,
+    );
     const data = await response.json();
 
     if (!response.ok) {
