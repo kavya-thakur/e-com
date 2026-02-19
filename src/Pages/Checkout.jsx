@@ -2,14 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../Context/CartContext";
 import { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  doc,
-  getDoc,
-  setDoc,
-} from "firebase/firestore";
+import { serverTimestamp, doc, getDoc, setDoc } from "firebase/firestore";
 import Ordersummary from "../Components/smallComponents/Ordersummary";
 import { Loader2, ArrowRight } from "lucide-react";
 
@@ -95,39 +88,7 @@ export default function Checkout() {
     return Object.keys(e).length === 0;
   };
 
-  // const createPaymentOrder = async () => {
-  //   const res = await fetch(
-  //     "https://ecommerce-rx1m.onrender.com/api/createCashfreeOrder",
-  //     {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({
-  //         amount: total,
-  //         orderId: "store_" + Date.now(),
-  //         customer: { id: auth.currentUser?.uid || "guest", email, phone },
-  //       }),
-  //     },
-  //   );
-  //   return await res.json();
-  // };
-
   const createPaymentOrder = async (orderMetadata) => {
-    // 1. SLIM ITEMS: Keep it light
-    const slimItems = orderMetadata.items.map((item) => ({
-      id: item.id,
-      q: item.qty,
-      n: (item.name || "Product").substring(0, 20), // Added 'n' for name fallback
-    }));
-
-    // 2. REVISED SLIM METADATA:
-    // We must include fields the webhook expects or uses as fallbacks
-    const slimMetadata = {
-      items: slimItems,
-      uid: orderMetadata.userId,
-      name: orderMetadata.customerName, // Added back (names are usually short)
-      addr: orderMetadata.address.substring(0, 40),
-    };
-
     const cleanPhone = orderMetadata.phone.replace(/\D/g, "").slice(-10);
 
     const res = await fetch(
@@ -143,7 +104,15 @@ export default function Checkout() {
             email: orderMetadata.email.trim(),
             phone: cleanPhone,
           },
-          metadata: slimMetadata,
+          // SEND EVERYTHING CLEARLY - No more slimming!
+          metadata: {
+            items: orderMetadata.items,
+            userId: orderMetadata.userId,
+            customerName: orderMetadata.customerName,
+            address: orderMetadata.address, // Matching the backend key exactly
+            subtotal: orderMetadata.subtotal,
+            shipping: orderMetadata.shipping,
+          },
         }),
       },
     );
@@ -158,36 +127,37 @@ export default function Checkout() {
     setMsg("");
 
     if (!validate()) return;
+
+    // Safety check for Login
+    const user = auth.currentUser;
+    if (!user) {
+      setMsg("Please login to complete your purchase.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const user = auth.currentUser;
-
-      // 1. Prepare Full Metadata
-      // Since the backend saves this directly, we can send EVERYTHING.
       const orderMetadata = {
         items: cart,
         customerName: `${first} ${last}`,
         phone,
         email,
-        address: `${street}, ${city} - ${zip}`,
-        userId: user?.uid || "guest",
+        address: `${street}, ${city}, ${zip}`, // Clean comma-separated address
+        userId: user.uid, // Explicitly use the UID
         subtotal,
         shipping,
         total,
       };
 
-      // 2. Call backend to pre-save order and get Cashfree Session
       const order = await createPaymentOrder(orderMetadata);
 
       if (!order?.payment_session_id) {
-        throw new Error(
-          "Unable to initialize payment session. Please try again.",
-        );
+        throw new Error("Unable to initialize payment session.");
       }
 
-      // 3. Save Address to Profile (Independent of payment)
-      if (saveAddress && user) {
+      // Save user address preference
+      if (saveAddress) {
         const userRef = doc(db, "users", user.uid);
         await setDoc(
           userRef,
@@ -199,8 +169,6 @@ export default function Checkout() {
         );
       }
 
-      // 4. Launch Cashfree Checkout
-      // Note: Use "production" if you are live, "sandbox" for testing
       const cashfree = window.Cashfree({ mode: "sandbox" });
       cashfree.checkout({
         paymentSessionId: order.payment_session_id,

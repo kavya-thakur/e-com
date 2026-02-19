@@ -71,7 +71,8 @@
 // export default router;
 import express from "express";
 import fetch from "node-fetch";
-import { db } from "../firebaseAdmin.js"; // Import your admin db
+import { db } from "../firebaseAdmin.js";
+import admin from "firebase-admin"; // Added for better timestamps
 
 const router = express.Router();
 
@@ -80,34 +81,39 @@ router.post("/", async (req, res) => {
     const { amount, orderId, customer, metadata } = req.body;
     const cleanPhone = customer.phone.replace(/\D/g, "").slice(-10);
 
-    // --- NEW STRATEGY: SAVE TO FIRESTORE FIRST ---
-    // We don't rely on Cashfree to hold our metadata anymore!
+    // 1. LOG FOR DEBUGGING (Check Render logs to see what metadata arrived)
+    console.log("📥 Metadata Received:", JSON.stringify(metadata));
+
+    // 2. SAVE TO FIRESTORE FIRST
     await db
       .collection("orders")
-      .doc(orderId)
+      .doc(String(orderId))
       .set({
-        orderId,
-        userId: metadata.userId || "guest",
-        items: metadata.items || [],
+        orderId: String(orderId),
+        // Fallbacks for common naming mismatches
+        userId: metadata?.userId || metadata?.uid || customer?.id || "guest",
+        items: metadata?.items || [],
         customer: {
-          name: metadata.customerName || "Customer",
-          email: customer.email,
+          name: metadata?.customerName || "Customer",
+          email: customer?.email || "",
           phone: cleanPhone,
-          address: metadata.address || "N/A",
+          // Checks 'address' or 'addr'
+          address: metadata?.address || metadata?.addr || "No Address Provided",
         },
         pricing: {
-          total: amount,
-          shipping: metadata.shipping || 0,
-          subtotal: metadata.subtotal || 0,
+          total: Number(amount),
+          shipping: Number(metadata?.shipping || 0),
+          subtotal: Number(metadata?.subtotal || 0),
         },
-        status: "pending", // Mark as pending initially
-        createdAt: new Date(),
+        status: "pending",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(), // Better than new Date()
         payment_gateway: "cashfree",
       });
 
-    console.log(`📡 Pending order saved: ${orderId}`);
+    console.log(
+      `📡 Pending order saved: ${orderId} for User: ${metadata?.userId}`,
+    );
 
-    // Now initialize Cashfree (we can keep order_note empty or simple)
     const response = await fetch("https://sandbox.cashfree.com/pg/orders", {
       method: "POST",
       headers: {
@@ -125,7 +131,7 @@ router.post("/", async (req, res) => {
           customer_email: customer.email,
           customer_phone: cleanPhone,
         },
-        order_note: "Order created via Kavyass", // Simple string
+        order_note: `Order ${orderId}`,
         order_meta: {
           return_url: `https://kavyass.vercel.app/payment-result?order_id=${orderId}`,
           notify_url: "https://ecommerce-rx1m.onrender.com/api/cashfreewebhook",

@@ -24,16 +24,28 @@ export default function Orders() {
       }
 
       try {
+        // Ensure "userId" (case sensitive) matches the field name in your Firestore doc
         const q = query(
           collection(db, "orders"),
           where("userId", "==", user.uid),
-          orderBy("createdAt", "desc")
+          orderBy("createdAt", "desc"),
         );
 
         const snap = await getDocs(q);
-        setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+        if (snap.empty) {
+          console.log("No orders found for this user ID:", user.uid);
+        }
+
+        const ordersList = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+
+        setOrders(ordersList);
       } catch (err) {
-        console.log(err);
+        // CHECK YOUR BROWSER CONSOLE FOR THE INDEX LINK HERE!
+        console.error("Error fetching orders:", err);
       }
 
       setLoading(false);
