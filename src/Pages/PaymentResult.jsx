@@ -14,8 +14,10 @@ export default function PaymentResult() {
       return;
     }
 
-    // Define the check function
-    const checkPayment = async (intervalId) => {
+    // Define a variable to hold the interval ID in this scope
+    let pollInterval;
+
+    const checkPayment = async () => {
       try {
         const res = await fetch(
           `https://ecommerce-rx1m.onrender.com/api/checkPaymentStatus/${orderId}`,
@@ -24,28 +26,27 @@ export default function PaymentResult() {
 
         if (data.status === "paid") {
           setStatus("success");
-          if (intervalId) clearInterval(intervalId); // Stop polling on success
+          clearInterval(pollInterval); // Kill the loop
         } else if (data.status === "failed") {
           setStatus("failed");
-          if (intervalId) clearInterval(intervalId); // Stop polling on failure
+          clearInterval(pollInterval); // Kill the loop
         } else {
-          // Only stay in 'checking' if backend explicitly says pending
+          // Continue 'checking' state
           setStatus("checking");
         }
       } catch (err) {
         console.error("Polling error:", err);
-        // We don't clear interval here so it can try again on next tick
       }
     };
 
-    // 1. Check immediately on mount
+    // 1. Run immediately
     checkPayment();
 
-    // 2. Set up the interval and pass its own ID so it can kill itself
-    const id = setInterval(() => checkPayment(id), 4000);
+    // 2. Set the interval to the variable we defined
+    pollInterval = setInterval(checkPayment, 4000);
 
-    // 3. Cleanup on unmount
-    return () => clearInterval(id);
+    // 3. Clean up when the user leaves the page
+    return () => clearInterval(pollInterval);
   }, [orderId]);
 
   return (

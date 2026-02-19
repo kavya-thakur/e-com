@@ -1,5 +1,5 @@
 import express from "express";
-import fetch from "node-fetch"; // Ensure node-fetch is installed
+import fetch from "node-fetch";
 
 const router = express.Router();
 
@@ -7,9 +7,6 @@ router.get("/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
 
-    console.log(`🔍 Checking Live Cashfree Status for: ${orderId}`);
-
-    // Talk directly to Cashfree API instead of Firestore
     const response = await fetch(
       `https://sandbox.cashfree.com/pg/orders/${orderId}`,
       {
@@ -24,35 +21,33 @@ router.get("/:orderId", async (req, res) => {
     );
 
     if (!response.ok) {
-      return res
-        .status(response.status)
-        .json({ status: "error", message: "Cashfree API error" });
+      return res.status(response.status).json({ status: "error" });
     }
 
     const data = await response.json();
 
-    /* Cashfree Order Statuses:
-       - PAID: Payment successful
-       - ACTIVE: Link generated, payment pending
-       - EXPIRED: User didn't pay in time
-    */
-
+    // LOGIC FIX:
+    // Anything that isn't SUCCESS or currently in-progress is a FAILURE.
     let status = "pending_payment";
-    if (data.order_status === "PAID") status = "paid";
-    if (data.order_status === "EXPIRED" || data.order_status === "TERMINATED")
-      status = "failed";
 
-    console.log(`✅ Live Status for ${orderId}: ${status}`);
+    if (data.order_status === "PAID") {
+      status = "paid";
+    } else if (data.order_status === "ACTIVE") {
+      // User still has the payment window open
+      status = "pending_payment";
+    } else {
+      // Covers: DROPPED, CANCELLED, EXPIRED, TERMINATED, FAILED
+      console.log(`❌ Transaction result for ${orderId}: ${data.order_status}`);
+      status = "failed";
+    }
 
     res.json({
       status: status,
       order_id: orderId,
-      // We don't have the full Firestore 'order' object yet because the webhook
-      // is still working, so we just return the status.
     });
   } catch (err) {
     console.error("Payment Check Error:", err);
-    res.status(500).json({ message: "Could not verify payment status" });
+    res.status(500).json({ message: "Verification failed" });
   }
 });
 
