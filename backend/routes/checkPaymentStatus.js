@@ -26,20 +26,25 @@ router.get("/:orderId", async (req, res) => {
 
     const data = await response.json();
 
-    let status = "failed";
+    let status = "checking";
 
-    if (data.order_status === "PAID") {
+    const cfStatus = data.order_status.toUpperCase();
+
+    if (cfStatus === "PAID") {
       status = "paid";
-    } else if (data.order_status === "ACTIVE") {
-      status = "checking";
     } else if (
-      data.order_status === "EXPIRED" ||
-      data.order_status === "TERMINATED"
+      cfStatus === "FAILED" ||
+      cfStatus === "CANCELLED" ||
+      cfStatus === "EXPIRED"
     ) {
       status = "failed";
+    } else if (cfStatus === "ACTIVE") {
+      status = "checking";
     } else {
       status = "failed";
     }
+
+    res.json({ status: status, order_id: orderId });
     res.json({
       status: status,
       order_id: orderId,

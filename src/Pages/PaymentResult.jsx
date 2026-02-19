@@ -14,7 +14,6 @@ export default function PaymentResult() {
       return;
     }
 
-    // Define a variable to hold the interval ID in this scope
     let pollInterval;
 
     const checkPayment = async () => {
@@ -22,28 +21,39 @@ export default function PaymentResult() {
         const res = await fetch(
           `https://ecommerce-rx1m.onrender.com/api/checkPaymentStatus/${orderId}`,
         );
-        const data = await res.json();
-        // Inside PaymentResult.jsx useEffect
 
-        if (data.status === "paid") {
+        // If server is down, don't spin forever
+        if (!res.ok) throw new Error("Server not responding");
+
+        const data = await res.json();
+
+        // Normalize status to lowercase to avoid "PAID" vs "paid" bugs
+        const currentStatus = data.status?.toLowerCase();
+
+        if (currentStatus === "paid" || currentStatus === "success") {
           setStatus("success");
-          clearInterval(pollInterval);
-        } else if (data.status === "failed") {
-          setStatus("failed");
-          clearInterval(pollInterval);
+          if (pollInterval) clearInterval(pollInterval);
         } else if (
-          data.status === "checking" ||
-          data.status === "pending_payment"
+          currentStatus === "failed" ||
+          currentStatus === "cancelled" ||
+          currentStatus === "expired" ||
+          currentStatus === "user_dropped"
         ) {
-          setStatus("checking"); // Keep the loader going
-        } else {
-          // If backend sends anything else, stop the spinner to avoid being stuck
           setStatus("failed");
-          clearInterval(pollInterval);
+          if (pollInterval) clearInterval(pollInterval);
+        } else if (
+          currentStatus === "checking" ||
+          currentStatus === "pending_payment"
+        ) {
+          setStatus("checking"); // Continue the loop
+        } else {
+          // Safety: If we get an unknown status, stop after a few tries
+          // or treat as failed to prevent infinite loading
+          console.log("Unknown status received:", currentStatus);
         }
       } catch (err) {
         console.error("Polling error:", err);
-        // Don't stop on one network error, let it retry once or twice
+        // We don't clear interval here so it can try again in 4 seconds
       }
     };
 
