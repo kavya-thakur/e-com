@@ -13,35 +13,39 @@ export default function PaymentResult() {
       setStatus("failed");
       return;
     }
-    async function checkPayment() {
+
+    // Define the check function
+    const checkPayment = async (intervalId) => {
       try {
         const res = await fetch(
           `https://ecommerce-rx1m.onrender.com/api/checkPaymentStatus/${orderId}`,
         );
         const data = await res.json();
 
-        // Match the strings returned by your updated backend
         if (data.status === "paid") {
           setStatus("success");
-          return;
-        }
-
-        // If it's still active or fetching, keep showing the loader
-        if (data.status === "pending_payment" || data.status === "checking") {
-          setStatus("checking");
-        } else {
-          // Only set failed if Cashfree explicitly says it failed
+          if (intervalId) clearInterval(intervalId); // Stop polling on success
+        } else if (data.status === "failed") {
           setStatus("failed");
+          if (intervalId) clearInterval(intervalId); // Stop polling on failure
+        } else {
+          // Only stay in 'checking' if backend explicitly says pending
+          setStatus("checking");
         }
       } catch (err) {
-        // On network error, don't show "Failed" immediately, just keep checking
         console.error("Polling error:", err);
+        // We don't clear interval here so it can try again on next tick
       }
-    }
+    };
 
+    // 1. Check immediately on mount
     checkPayment();
-    const interval = setInterval(checkPayment, 4000);
-    return () => clearInterval(interval);
+
+    // 2. Set up the interval and pass its own ID so it can kill itself
+    const id = setInterval(() => checkPayment(id), 4000);
+
+    // 3. Cleanup on unmount
+    return () => clearInterval(id);
   }, [orderId]);
 
   return (
