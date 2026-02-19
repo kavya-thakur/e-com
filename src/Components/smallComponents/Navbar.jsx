@@ -104,16 +104,21 @@ export default function Navbar() {
             <motion.div whileHover={{ y: -2 }}>
               <Link
                 to="/cart"
-                className="relative hover:opacity-60 transition-opacity"
+                className="relative inline-flex items-center justify-center p-1 hover:opacity-60 transition-opacity"
               >
-                <ShoppingCart size={20} strokeWidth={1.5} />
+                <ShoppingCart size={22} strokeWidth={1.5} />{" "}
+                {/* Slightly larger icon for mobile touch */}
                 <AnimatePresence>
                   {cart.length > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
-                      className="absolute -top-2 -right-2 bg-black text-white invert dark:invert-0 text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full"
+                      // Using translate classes for perfect centering regardless of icon size
+                      className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 
+                     bg-black text-white dark:bg-white dark:text-black
+                     text-[9px] font-bold w-4 h-4 flex items-center justify-center 
+                     rounded-full z-10 border border-white dark:border-black"
                     >
                       {cart.length}
                     </motion.span>
