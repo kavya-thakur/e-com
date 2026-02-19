@@ -26,12 +26,10 @@ export default function Cart() {
   const { cart, dispatch } = useCart();
   const [loading, setLoading] = useState(true);
 
-  // Logic remains identical to your original
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
   const shipping = subtotal > 0 ? 49 : 0;
   const total = subtotal + shipping;
 
-  // Simulate a smooth initial load to prevent "flicker"
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);

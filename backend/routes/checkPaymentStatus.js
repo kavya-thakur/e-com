@@ -26,21 +26,20 @@ router.get("/:orderId", async (req, res) => {
 
     const data = await response.json();
 
-    // LOGIC FIX:
-    // Anything that isn't SUCCESS or currently in-progress is a FAILURE.
-    let status = "pending_payment";
+    let status = "failed";
 
     if (data.order_status === "PAID") {
       status = "paid";
     } else if (data.order_status === "ACTIVE") {
-      // User still has the payment window open
-      status = "pending_payment";
+      status = "checking";
+    } else if (
+      data.order_status === "EXPIRED" ||
+      data.order_status === "TERMINATED"
+    ) {
+      status = "failed";
     } else {
-      // Covers: DROPPED, CANCELLED, EXPIRED, TERMINATED, FAILED
-      console.log(`❌ Transaction result for ${orderId}: ${data.order_status}`);
       status = "failed";
     }
-
     res.json({
       status: status,
       order_id: orderId,

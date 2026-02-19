@@ -31,7 +31,10 @@ export default function Orders() {
         );
 
         const snap = await getDocs(q);
-        const ordersList = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const ordersList = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((order) => order.status === "paid");
+
         setOrders(ordersList);
       } catch (err) {
         console.error("Error fetching orders:", err);

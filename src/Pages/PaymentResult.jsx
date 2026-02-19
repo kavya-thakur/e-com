@@ -23,19 +23,27 @@ export default function PaymentResult() {
           `https://ecommerce-rx1m.onrender.com/api/checkPaymentStatus/${orderId}`,
         );
         const data = await res.json();
+        // Inside PaymentResult.jsx useEffect
 
         if (data.status === "paid") {
           setStatus("success");
-          clearInterval(pollInterval); // Kill the loop
+          clearInterval(pollInterval);
         } else if (data.status === "failed") {
           setStatus("failed");
-          clearInterval(pollInterval); // Kill the loop
+          clearInterval(pollInterval);
+        } else if (
+          data.status === "checking" ||
+          data.status === "pending_payment"
+        ) {
+          setStatus("checking"); // Keep the loader going
         } else {
-          // Continue 'checking' state
-          setStatus("checking");
+          // If backend sends anything else, stop the spinner to avoid being stuck
+          setStatus("failed");
+          clearInterval(pollInterval);
         }
       } catch (err) {
         console.error("Polling error:", err);
+        // Don't stop on one network error, let it retry once or twice
       }
     };
 
