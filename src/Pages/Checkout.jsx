@@ -111,23 +111,16 @@ export default function Checkout() {
   //   return await res.json();
   // };
 
-  const createPaymentOrder = async () => {
-    const cleanItems = cart.map((item) => ({
+  const createPaymentOrder = async (orderMetadata) => {
+    // 1. Clean the cart items inside the helper to keep metadata light
+    const cleanItems = orderMetadata.items.map((item) => ({
       id: item.id || "unknown",
       name: (item.name || "Product").toString().substring(0, 50),
       price: Number(item.price) || 0,
       qty: Number(item.qty) || 1,
     }));
 
-    const orderMetadata = {
-      items: cleanItems,
-      address: `${street}, ${city} - ${zip}`,
-      customerName: `${first} ${last}`,
-      userId: auth.currentUser?.uid || "guest",
-      total: total,
-    };
-
-    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    const cleanPhone = orderMetadata.phone.replace(/\D/g, "").slice(-10);
 
     const res = await fetch(
       "https://ecommerce-rx1m.onrender.com/api/createCashfreeOrder",
@@ -135,90 +128,38 @@ export default function Checkout() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: Number(total),
+          amount: Number(orderMetadata.total),
           orderId: "KAVYASS_" + Date.now(),
           customer: {
-            id: auth.currentUser?.uid || "guest",
-            email: email.trim(),
+            id: orderMetadata.userId,
+            email: orderMetadata.email.trim(),
             phone: cleanPhone,
           },
-          metadata: orderMetadata,
+          // We pass the cleaned items back into the metadata here
+          metadata: { ...orderMetadata, items: cleanItems },
         }),
       },
     );
 
+    const data = await res.json();
     if (!res.ok) {
-      const errorData = await res.json();
-      // This will print the EXACT error from Cashfree (e.g., "invalid phone", "amount too small")
-      console.error("CASHFREE REJECTED THIS:", errorData);
-      throw new Error(errorData.message || "Payment failed to initialize");
+      console.error("Cashfree API Error:", data);
+      throw new Error(data.message || "Server rejected order creation");
     }
-
-    return await res.json();
+    return data;
   };
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setMsg("");
-  //   if (!validate()) return;
-  //   setLoading(true);
-
-  //   try {
-  //     const user = auth.currentUser;
-  //     const order = await createPaymentOrder();
-  //     if (!order?.payment_session_id) throw new Error("Payment failed");
-
-  //     await addDoc(collection(db, "orders"), {
-  //       userId: user?.uid || "guest",
-  //       items: cart,
-  //       customer: {
-  //         email,
-  //         phone,
-  //         name: `${first} ${last}`,
-  //         address: `${street}, ${city} - ${zip}`,
-  //       },
-  //       subtotal,
-  //       shipping,
-  //       total,
-  //       status: "pending_payment",
-  //       order_id: order.order_id,
-  //       createdAt: serverTimestamp(),
-  //     });
-
-  //     if (saveAddress && user) {
-  //       const userRef = doc(db, "users", user.uid);
-  //       await setDoc(
-  //         userRef,
-  //         {
-  //           savedAddress: { first, last, phone, street, city, zip },
-  //           lastUpdated: serverTimestamp(),
-  //         },
-  //         { merge: true },
-  //       );
-  //     }
-
-  //     window.Cashfree({ mode: "sandbox" }).checkout({
-  //       paymentSessionId: order.payment_session_id,
-  //       redirectTarget: "_self",
-  //     });
-  //   } catch (err) {
-  //     setMsg("Something went wrong. Please try again.");
-  //   }
-  //   setLoading(false);
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
 
-    // 1. Validate form fields first
     if (!validate()) return;
-
     setLoading(true);
 
     try {
       const user = auth.currentUser;
 
+      // Create the metadata object ONCE
       const orderMetadata = {
         items: cart,
         customerName: `${first} ${last}`,
@@ -231,10 +172,13 @@ export default function Checkout() {
         total,
       };
 
+      // Pass it to the helper
       const order = await createPaymentOrder(orderMetadata);
 
-      if (!order?.payment_session_id)
-        throw new Error("Payment failed to initialize");
+      if (!order?.payment_session_id) {
+        throw new Error("No payment session received.");
+      }
+
       if (saveAddress && user) {
         const userRef = doc(db, "users", user.uid);
         await setDoc(
@@ -246,13 +190,17 @@ export default function Checkout() {
           { merge: true },
         );
       }
-      window.Cashfree({ mode: "sandbox" }).checkout({
+
+      // Initialize Cashfree
+      const cashfree = window.Cashfree({ mode: "sandbox" });
+      cashfree.checkout({
         paymentSessionId: order.payment_session_id,
         redirectTarget: "_self",
       });
     } catch (err) {
       console.error("Checkout Error:", err);
-      setMsg("Something went wrong. Please try again.");
+      // Use the specific error message if available
+      setMsg(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
