@@ -13,7 +13,6 @@ export default function PaymentResult() {
       setStatus("failed");
       return;
     }
-
     async function checkPayment() {
       try {
         const res = await fetch(
@@ -21,18 +20,22 @@ export default function PaymentResult() {
         );
         const data = await res.json();
 
+        // Match the strings returned by your updated backend
         if (data.status === "paid") {
           setStatus("success");
           return;
         }
-        if (data.status === "pending_payment") {
+
+        // If it's still active or fetching, keep showing the loader
+        if (data.status === "pending_payment" || data.status === "checking") {
           setStatus("checking");
-          return;
+        } else {
+          // Only set failed if Cashfree explicitly says it failed
+          setStatus("failed");
         }
-        setStatus("failed");
       } catch (err) {
-        console.error(err);
-        setStatus("failed");
+        // On network error, don't show "Failed" immediately, just keep checking
+        console.error("Polling error:", err);
       }
     }
 
