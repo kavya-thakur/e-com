@@ -112,6 +112,17 @@ export default function Checkout() {
   // };
 
   const createPaymentOrder = async () => {
+    // Prepare the object exactly how the backend expects it
+    const orderMetadata = {
+      items: cart,
+      address: `${street}, ${city} - ${zip}`,
+      customerName: `${first} ${last}`,
+      userId: auth.currentUser?.uid || "guest",
+      subtotal,
+      shipping,
+      total,
+    };
+
     const res = await fetch(
       "https://ecommerce-rx1m.onrender.com/api/createCashfreeOrder",
       {
@@ -121,13 +132,8 @@ export default function Checkout() {
           amount: total,
           orderId: "KAVYASS_" + Date.now(),
           customer: { id: auth.currentUser?.uid || "guest", email, phone },
-          // Pass the items and address here so Cashfree "remembers" them
-          order_note: JSON.stringify({
-            items: cart,
-            address: `${street}, ${city} - ${zip}`,
-            customerName: `${first} ${last}`,
-            userId: auth.currentUser?.uid || "guest",
-          }),
+          // CHANGE THIS LINE: Backend expects 'metadata'
+          metadata: orderMetadata,
         }),
       },
     );
