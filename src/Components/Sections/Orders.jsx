@@ -24,7 +24,6 @@ export default function Orders() {
       }
 
       try {
-        // Ensure "userId" (case sensitive) matches the field name in your Firestore doc
         const q = query(
           collection(db, "orders"),
           where("userId", "==", user.uid),
@@ -32,208 +31,144 @@ export default function Orders() {
         );
 
         const snap = await getDocs(q);
-
-        if (snap.empty) {
-          console.log("No orders found for this user ID:", user.uid);
-        }
-
-        const ordersList = snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }));
-
+        const ordersList = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setOrders(ordersList);
       } catch (err) {
-        // CHECK YOUR BROWSER CONSOLE FOR THE INDEX LINK HERE!
         console.error("Error fetching orders:", err);
       }
-
       setLoading(false);
     });
-
     return () => unsub();
   }, []);
 
-  // ---------------- Skeleton Loader ----------------
   if (loading)
     return (
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-6">
-        <div className="space-y-2">
-          <div className="h-6 w-36 rounded bg-gray-200 shimmer" />
-          <div className="h-4 w-60 rounded bg-gray-200 shimmer" />
-        </div>
-
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="rounded-2xl  bg-white/70 backdrop-blur-sm p-6 space-y-5 shimmer-card"
-          >
-            <div className="flex justify-between">
-              <div className="h-4 w-28 rounded bg-gray-200 shimmer" />
-              <div className="h-5 w-20 rounded bg-gray-200 shimmer" />
-            </div>
-
-            <div className="space-y-4">
-              {[1, 2].map((k) => (
-                <div key={k} className="flex gap-4">
-                  <div className="w-20 h-24 rounded-xl bg-gray-200 shimmer" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-40 bg-gray-200 shimmer rounded" />
-                    <div className="h-3 w-24 bg-gray-200 shimmer rounded" />
-                  </div>
-                  <div className="h-4 w-10 bg-gray-200 shimmer rounded" />
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+      <div className="p-20 text-center font-medium">
+        Loading your order history...
       </div>
     );
 
-  // ---------------- Empty State ----------------
   if (orders.length === 0)
     return (
-      <div className="min-h-[55vh] flex flex-col items-center justify-center px-6 text-center">
-        <Package className="w-10 h-10 text-gray-400 mb-3" />
-        <h3 className="text-lg font-semibold">No orders yet</h3>
-        <p className="text-gray-500 text-sm mt-1">
-          When you place an order, it will appear here.
-        </p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center">
+        <Package className="w-12 h-12 text-gray-300 mb-4" />
+        <h3 className="text-xl font-semibold">No orders found</h3>
+        <p className="text-gray-500">Your recent purchases will appear here.</p>
       </div>
     );
-
-  const variants = {
-    hidden: { opacity: 0, y: 18, scale: 0.98 },
-    visible: (i) => ({
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        delay: i * 0.05,
-        type: "spring",
-        stiffness: 110,
-        damping: 22,
-      },
-    }),
-    exit: { opacity: 0, y: 14, scale: 0.98 },
-  };
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
-      <div className="mb-10">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Orders
-        </h1>
-        <p className="text-gray-500 mt-2">
-          View, track, and manage your purchases.
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight mb-10">Your Orders</h1>
 
-      <AnimatePresence>
-        <div className="space-y-9">
-          {orders.map((order, i) => {
-            const status = order.status?.toLowerCase();
+      <div className="space-y-10">
+        {orders.map((order) => (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            key={order.id}
+            className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          >
+            {/* Header */}
+            <div className="bg-gray-50/50 px-6 py-4 flex justify-between items-center border-b border-gray-100">
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+                  Order ID
+                </p>
+                <p className="text-sm font-mono text-gray-700">
+                  {order.orderId || order.id}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold border uppercase ${
+                    order.status === "paid"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                      : "bg-amber-50 text-amber-700 border-amber-100"
+                  }`}
+                >
+                  {order.status || "Pending"}
+                </span>
+              </div>
+            </div>
 
-            const badge = {
-              pending: {
-                icon: <Clock className="w-4 h-4" />,
-                cls: "bg-amber-50 text-amber-700 border-amber-200",
-              },
-              completed: {
-                icon: <CheckCircle2 className="w-4 h-4" />,
-                cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
-              },
-              failed: {
-                icon: <AlertCircle className="w-4 h-4" />,
-                cls: "bg-rose-50 text-rose-700 border-rose-200",
-              },
-            }[status] || {
-              icon: <Package className="w-4 h-4" />,
-              cls: "bg-gray-50 text-gray-700 border-gray-200",
-            };
+            {/* Items Section */}
+            <div className="px-6 divide-y divide-gray-50">
+              {order.items?.map((item, idx) => {
+                // DEBUG LOG: This helps us see why data is missing
+                console.log(`📦 Order ${order.id} | Item ${idx}:`, item);
 
-            return (
-              <motion.div
-                key={order.id}
-                custom={i}
-                variants={variants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                whileHover={{ y: -2 }}
-                className="rounded-2xl border border-gray-200/70 bg-white/70 backdrop-blur-sm p-6 shadow-[0_8px_28px_-10px_rgba(0,0,0,0.15)] transition-all"
-              >
-                {/* Top */}
-                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase">Order ID</p>
-                    <p className="text-sm mt-0.5">{order.order_id}</p>
+                return (
+                  <div key={idx} className="flex items-center gap-6 py-6">
+                    <div className="w-24 h-28 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                      <img
+                        // Trying all possible image field names
+                        src={
+                          item.image ||
+                          item.img ||
+                          item.thumbnail ||
+                          item.url ||
+                          "https://placehold.co/400x500/f3f4f6/374151?text=No+Image"
+                        }
+                        alt="Product"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src =
+                            "https://placehold.co/400x500/f3f4f6/374151?text=Image+Error";
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-900 text-lg leading-tight">
+                        {/* Fallback chain for the product name */}
+                        {item.name || item.title || item.n || "Premium Item"}
+                      </p>
+                      <p className="text-gray-500 text-sm mt-1.5 font-medium">
+                        Quantity: {item.qty || item.q || 1}
+                      </p>
+                      <p className="text-gray-400 text-xs mt-0.5">
+                        Product ID: {item.id}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="font-bold text-xl text-gray-900">
+                        ₹{item.price || "0"}
+                      </p>
+                    </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  <span
-                    className={`inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium ${badge.cls}`}
-                  >
-                    {badge.icon}
-                    {order.status}
-                  </span>
-                </div>
-
-                {/* Items */}
-                <div className="divide-y">
-                  {order.items?.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      whileHover={{ x: 3 }}
-                      transition={{ duration: 0.18 }}
-                      className="flex items-center gap-5 py-5"
-                    >
-                      <div className="w-20 h-24 rounded-xl overflow-hidden  bg-gray-50">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <p className="font-medium">{item.title}</p>
-                        <p className="text-gray-500 text-sm mt-0.5">
-                          Qty {item.qty} — Size {item.size}
-                        </p>
-                      </div>
-
-                      <p className="font-semibold">₹{item.price}</p>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Bottom */}
-                <div className="flex flex-wrap justify-between items-center mt-6 text-sm">
-                  <p className="text-gray-500">
-                    Placed on{" "}
-                    <span className="font-medium">
-                      {order.createdAt?.toDate
-                        ? order.createdAt.toDate().toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : ""}
-                    </span>
-                  </p>
-
-                  <button className="flex items-center gap-1.5 text-gray-800 hover:text-black transition">
-                    <span className="text-base font-semibold">
-                      ₹{order.total}
-                    </span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </AnimatePresence>
+            {/* Footer */}
+            <div className="bg-gray-50/30 px-6 py-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1.5">
+                  Shipping Address
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed max-w-sm">
+                  {order.customer?.address ||
+                    order.address ||
+                    "No address on record"}
+                </p>
+              </div>
+              <div className="md:text-right">
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-0.5">
+                  Total Paid
+                </p>
+                <p className="text-3xl font-black text-gray-900">
+                  ₹
+                  {order.pricing?.total ||
+                    order.total ||
+                    order.payment_details?.payment_amount}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
