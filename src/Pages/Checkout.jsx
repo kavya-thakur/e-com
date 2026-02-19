@@ -112,13 +112,13 @@ export default function Checkout() {
   // };
 
   const createPaymentOrder = async () => {
-    // 1. STRIP THE CART: Only keep the bare essentials
+    // 1. STRIP THE CART: Added safety checks for item properties
     const cleanItems = cart.map((item) => ({
-      id: item.id,
-      name: item.name.substring(0, 50), // Keep name short
-      price: item.price,
-      qty: item.qty,
-      // Do NOT include image URLs or descriptions here
+      id: item.id || "unknown",
+      // Safety check: if name is missing, use 'Product' as default
+      name: (item.name || "Product").toString().substring(0, 50),
+      price: Number(item.price) || 0,
+      qty: Number(item.qty) || 1,
     }));
 
     const orderMetadata = {
