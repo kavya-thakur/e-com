@@ -112,16 +112,25 @@ export default function Checkout() {
   // };
 
   const createPaymentOrder = async () => {
-    // Prepare the object exactly how the backend expects it
+    // 1. STRIP THE CART: Only keep the bare essentials
+    const cleanItems = cart.map((item) => ({
+      id: item.id,
+      name: item.name.substring(0, 50), // Keep name short
+      price: item.price,
+      qty: item.qty,
+      // Do NOT include image URLs or descriptions here
+    }));
+
     const orderMetadata = {
-      items: cart,
+      items: cleanItems,
       address: `${street}, ${city} - ${zip}`,
       customerName: `${first} ${last}`,
       userId: auth.currentUser?.uid || "guest",
-      subtotal,
-      shipping,
-      total,
+      total: total,
     };
+
+    // 2. CLEAN THE PHONE: Cashfree Sandbox fails if phone is not exactly 10 digits
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
 
     const res = await fetch(
       "https://ecommerce-rx1m.onrender.com/api/createCashfreeOrder",
@@ -129,14 +138,25 @@ export default function Checkout() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: total,
+          amount: Number(total), // Ensure it's a number, not a string
           orderId: "KAVYASS_" + Date.now(),
-          customer: { id: auth.currentUser?.uid || "guest", email, phone },
-          // CHANGE THIS LINE: Backend expects 'metadata'
+          customer: {
+            id: auth.currentUser?.uid || "guest",
+            email: email.trim(),
+            phone: cleanPhone,
+          },
           metadata: orderMetadata,
         }),
       },
     );
+
+    // 3. BETTER ERROR HANDLING: This helps you see WHY it failed
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error("Cashfree Reject Reason:", errorData);
+      throw new Error(errorData.message || "Payment failed to initialize");
+    }
+
     return await res.json();
   };
 
@@ -202,8 +222,6 @@ export default function Checkout() {
     try {
       const user = auth.currentUser;
 
-      // 2. Prepare the metadata to send to your backend
-      // We send this so the Webhook knows WHAT was bought when the payment succeeds
       const orderMetadata = {
         items: cart,
         customerName: `${first} ${last}`,
@@ -216,15 +234,10 @@ export default function Checkout() {
         total,
       };
 
-      // 3. Create the Payment Order
-      // Note: Pass orderMetadata to your API so it can be stored in Cashfree's 'order_note'
       const order = await createPaymentOrder(orderMetadata);
 
       if (!order?.payment_session_id)
         throw new Error("Payment failed to initialize");
-
-      // 4. NEW: SAVE ADDRESS TO PROFILE (Optional but Recommended)
-      // We still do this here so the user's profile updates immediately
       if (saveAddress && user) {
         const userRef = doc(db, "users", user.uid);
         await setDoc(
@@ -236,11 +249,6 @@ export default function Checkout() {
           { merge: true },
         );
       }
-
-      // 5. --- REMOVED addDoc(collection(db, "orders")... ---
-      // We no longer save a "pending" order. Firestore stays clean.
-
-      // 6. Launch Cashfree Modal
       window.Cashfree({ mode: "sandbox" }).checkout({
         paymentSessionId: order.payment_session_id,
         redirectTarget: "_self",
