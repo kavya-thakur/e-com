@@ -52,96 +52,76 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   try {
     const event = req.body;
-
-    // Safety check: Log the raw structure if debugging
-    // console.log("FULL WEBHOOK BODY:", JSON.stringify(event));
-
     const orderData = event?.data?.order;
     const paymentData = event?.data?.payment;
+
     const orderId = orderData?.order_id;
     const paymentStatus = paymentData?.payment_status;
-    const orderNote = orderData?.order_note;
 
     console.log(
-      `🔔 Webhook received for Order: ${orderId} | Status: ${paymentStatus}`,
+      `🔔 Webhook Received: Order ${orderId} | Status: ${paymentStatus}`,
     );
 
-    if (!orderId) return res.status(400).send("No order id");
+    if (!orderId) {
+      return res.status(400).send("No order id in payload");
+    }
 
+    // Process only on SUCCESS
     if (paymentStatus === "SUCCESS") {
-      // If orderNote is missing, we log it but try to save a basic record anyway
-      // so you don't lose the payment information!
-      if (!orderNote) {
-        console.error(
-          "❌ No metadata found in order_note. Saving basic order info.",
+      const orderRef = db.collection("orders").doc(orderId);
+      const doc = await orderRef.get();
+
+      if (!doc.exists) {
+        // If the backend failed to save the 'pending' order for some reason,
+        // we create a fallback record so the money isn't "lost"
+        console.warn(
+          `⚠️ Order ${orderId} not found in DB. Creating fallback record.`,
         );
-        await db.collection("orders").doc(orderId).set(
+        await orderRef.set(
           {
             order_id: orderId,
-            status: "paid_missing_metadata",
-            total: orderData.order_amount,
-            cf_payment_id: paymentData.cf_payment_id,
+            status: "paid_manual_verify",
+            total: orderData?.order_amount,
+            cf_payment_id: paymentData?.cf_payment_id,
             paidAt: admin.firestore.FieldValue.serverTimestamp(),
             payment_gateway: "cashfree",
-            manual_check_required: true,
+            note: "Metadata missing because document was not pre-saved.",
           },
           { merge: true },
         );
-
-        return res.status(200).send("Acknowledge missing metadata");
+      } else {
+        // Normal Flow: Update the pre-saved pending order
+        await orderRef.update({
+          status: "paid",
+          paidAt: admin.firestore.FieldValue.serverTimestamp(),
+          cf_payment_id: paymentData?.cf_payment_id,
+          // We store the full payment object for safety
+          payment_details: paymentData,
+        });
       }
 
-      let details;
-      try {
-        details = JSON.parse(orderNote);
-      } catch (e) {
-        console.error("❌ JSON Parse Error on order_note:", orderNote);
-        details = {}; // Fallback
-      }
+      console.log(`✅ Order ${orderId} successfully marked as PAID.`);
+      return res.status(200).send("OK");
+    }
 
-      // --- SMART MAPPING ---
+    // Handle other statuses (FAILED, CANCELLED) if you want to track them
+    if (paymentStatus === "FAILED") {
       await db
         .collection("orders")
         .doc(orderId)
-        .set(
-          {
-            order_id: orderId,
-            status: "paid",
-            items:
-              details.items?.map((item) => ({
-                id: item.id || "unknown",
-                qty: item.q || item.qty || 1,
-                name: item.name || "Product",
-              })) || [],
-            customer: {
-              name: details.customerName || "Customer",
-              address: details.address || details.addr || "Address in Profile",
-              email: details.email || "",
-              phone: details.phone || "",
-            },
-            userId: details.userId || details.uid || "guest",
-            pricing: {
-              subtotal: details.subtotal || 0,
-              shipping: details.shipping || 0,
-              total: details.total || orderData.order_amount,
-            },
-            paidAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            payment_gateway: "cashfree",
-            cashfree_reference: paymentData.cf_payment_id,
-          },
-          { merge: true },
-        );
-
-      console.log(`✅ Order ${orderId} saved to Firestore.`);
-      return res.status(200).send("Order Created");
+        .update({
+          status: "failed",
+          last_updated: admin.firestore.FieldValue.serverTimestamp(),
+        })
+        .catch(() => {}); // Ignore error if doc doesn't exist
     }
 
-    console.log(`ℹ️ Status ${paymentStatus}. No doc created for ${orderId}.`);
     res.status(200).send("Acknowledged");
   } catch (err) {
-    console.error("❌ Webhook processing failed:", err);
-    res.status(500).send("fail");
+    console.error("❌ Webhook processing error:", err.message);
+    // Always return 200 to Cashfree unless it's a critical server crash,
+    // otherwise Cashfree will keep retrying and spamming your logs.
+    res.status(200).send("Processed with error");
   }
 });
 

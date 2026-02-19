@@ -163,7 +163,8 @@ export default function Checkout() {
     try {
       const user = auth.currentUser;
 
-      // Create the metadata object ONCE
+      // 1. Prepare Full Metadata
+      // Since the backend saves this directly, we can send EVERYTHING.
       const orderMetadata = {
         items: cart,
         customerName: `${first} ${last}`,
@@ -176,13 +177,16 @@ export default function Checkout() {
         total,
       };
 
-      // Pass it to the helper
+      // 2. Call backend to pre-save order and get Cashfree Session
       const order = await createPaymentOrder(orderMetadata);
 
       if (!order?.payment_session_id) {
-        throw new Error("No payment session received.");
+        throw new Error(
+          "Unable to initialize payment session. Please try again.",
+        );
       }
 
+      // 3. Save Address to Profile (Independent of payment)
       if (saveAddress && user) {
         const userRef = doc(db, "users", user.uid);
         await setDoc(
@@ -195,7 +199,8 @@ export default function Checkout() {
         );
       }
 
-      // Initialize Cashfree
+      // 4. Launch Cashfree Checkout
+      // Note: Use "production" if you are live, "sandbox" for testing
       const cashfree = window.Cashfree({ mode: "sandbox" });
       cashfree.checkout({
         paymentSessionId: order.payment_session_id,
@@ -203,8 +208,7 @@ export default function Checkout() {
       });
     } catch (err) {
       console.error("Checkout Error:", err);
-      // Use the specific error message if available
-      setMsg(err.message || "Something went wrong. Please try again.");
+      setMsg(err.message || "Payment initialization failed.");
     } finally {
       setLoading(false);
     }
