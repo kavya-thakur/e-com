@@ -103,13 +103,14 @@ router.post("/", async (req, res) => {
           customer_email: customer.email,
           customer_phone: customer.phone,
         },
-        // 2. Pass the metadata as a string in order_note
-        // This is what the webhook will "read" later to save the order
         order_note: JSON.stringify(metadata),
 
         order_meta: {
           return_url:
             "https://kavyass.vercel.app/payment-result?order_id={order_id}",
+          // 👇 THIS IS THE MISSING LINK
+          // This tells Cashfree to send the SUCCESS signal to your webhook route
+          notify_url: "https://ecommerce-rx1m.onrender.com/api/cashfreewebhook",
         },
       }),
     });
